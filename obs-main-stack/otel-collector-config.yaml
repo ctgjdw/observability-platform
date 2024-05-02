@@ -1,0 +1,52 @@
+receivers:
+  otlp/collector1:
+    protocols:
+      http:
+        endpoint: "otel_collector:4318"
+        include_metadata: true
+
+extensions:
+  headers_setter:
+    headers:
+      - action: upsert
+        key: X-Scope-OrgID
+        from_context: X-Scope-OrgID
+
+exporters:
+  debug:
+    verbosity: detailed
+  otlphttp:
+    endpoint: "http://tempo:4318"
+    auth:
+      authenticator: headers_setter
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    resource_to_telemetry_conversion:
+      enabled: true
+
+connectors:
+  spanmetrics:
+    dimensions:
+      - name: http.method
+      - name: http.status_code
+      - name: http.route
+      - name: service.namespace
+
+processors:
+  batch:
+
+service:
+  extensions: [headers_setter]
+  telemetry:
+    logs:
+      level: DEBUG
+    metrics:
+      level: detailed
+  pipelines:
+    traces:
+      receivers: [otlp/collector1]
+      processors: [batch]
+      exporters: [debug, spanmetrics, otlphttp]
+    metrics/spanmetrics:
+      receivers: [spanmetrics]
+      exporters: [prometheus]

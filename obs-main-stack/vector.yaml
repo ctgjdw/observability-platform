@@ -1,0 +1,199 @@
+sources:
+  test_app_docker_logs:
+    type: docker_logs
+    docker_host: /var/run/docker.sock
+    include_images:
+      - logging-test:2.0.0
+
+  opensearch_prom_scrape:
+    type: prometheus_scrape
+    endpoints:
+      - https://opensearch:9200/_prometheus/metrics
+    auth:
+      password: admin
+      strategy: basic
+      user: admin
+    tls:
+      verify_certificate: false
+
+  api_server_1_prom_scrape:
+    type: prometheus_scrape
+    endpoints:
+      - http://api-server-1:5050/metrics
+    # auth:
+    #   password: password123
+    #   strategy: basic
+    #   user: admin
+    # tls:
+    #   verify_certificate: false
+
+
+  node_exporter_prom_scrape:
+    type: prometheus_scrape
+    endpoints:
+      - http://node-exporter:9100/metrics
+    # auth:
+    #   password: password123
+    #   strategy: basic
+    #   user: admin
+    # tls:
+    #   verify_certificate: false
+    
+  
+  # opentelemetry_app:
+  #   type: opentelemetry
+  #   grpc:
+  #     address: 0.0.0.0:4317
+  #   http:
+  #     address: 0.0.0.0:4318
+  #     # keepalive:
+  #     #   max_connection_age_jitter_factor: 0.1
+  #     #   max_connection_age_secs: 300
+
+
+
+transforms:
+  clean_docker_labels:
+    inputs:
+      - "test_app_docker_logs"
+    type: "remap"
+    source: |
+      .label."com.docker.compose.project.name" = del(.label."com.docker.compose.project")
+  # https://grokconstructor.appspot.com/do/match#result to test grok parsing
+  parse_log4j2:
+    inputs:
+      - "clean_docker_labels"
+    type: "remap"
+    source: |
+      ". = parse_json!(.message)"
+
+sinks:
+  test_app_docker_logs_es:
+    inputs:
+      - "parse_log4j2"
+    type: "elasticsearch"
+    endpoints:
+      - https://opensearch:9200
+    auth:
+      password: admin
+      strategy: basic
+      user: admin
+    tls:
+      verify_certificate: false
+    healthcheck:
+      enabled: false
+    api_version: v7
+    mode: bulk
+    bulk: 
+      index: test_app_docker_logs-%Y-%m-%d
+
+  # test_app_docker_logs_loki:
+  #   inputs:
+  #     - "parse_log4j2"
+  #   type: loki
+  #   endpoint: http://loki:3100
+  #   encoding:
+  #     codec: "json"
+  #   labels:
+  #     app: "api-server"
+  #     env: "test"
+
+  
+
+
+  # postgres_es:
+  #   inputs:
+  #     - "postgres"
+  #   type: "elasticsearch"
+  #   endpoints:
+  #     - https://opensearch:9200
+  #   auth:
+  #     password: admin
+  #     strategy: basic
+  #     user: admin
+  #   tls:
+  #     verify_certificate: false
+  #   healthcheck:
+  #     enabled: false
+  #   api_version: v7
+  #   mode: bulk
+  #   bulk: 
+  #     index: postgres-%Y-%m-%d
+
+  api_server_1_prom_es:
+    inputs:
+      - "api_server_1_prom_scrape"
+    type: "elasticsearch"
+    endpoints:
+      - https://opensearch:9200
+    auth:
+      password: admin
+      strategy: basic
+      user: admin
+    tls:
+      verify_certificate: false
+    healthcheck:
+      enabled: false
+    api_version: v7
+    mode: bulk
+    bulk: 
+      index: api_server_1_prom-%Y-%m-%d
+
+  node_exporter_prom_es:
+    inputs:
+      - "node_exporter_prom_scrape"
+    type: "elasticsearch"
+    endpoints:
+      - https://opensearch:9200
+    auth:
+      password: admin
+      strategy: basic
+      user: admin
+    tls:
+      verify_certificate: false
+    healthcheck:
+      enabled: false
+    api_version: v7
+    mode: bulk
+    bulk: 
+      index: node_exporter_prom-%Y-%m-%d
+
+  opensearch_data_exporter:
+    inputs:
+      - "opensearch_prom_scrape"
+    type: "elasticsearch"
+    endpoints:
+      - https://opensearch:9200
+    auth:
+      password: admin
+      strategy: basic
+      user: admin
+    tls:
+      verify_certificate: false
+    healthcheck:
+      enabled: false
+    api_version: v7
+    mode: bulk
+    bulk: 
+      index: opensearch_prom-%Y-%m-%d
+    
+
+  # opentelemetry_es:
+  #   inputs:
+  #     - "opentelemetry_app"
+  #   type: "elasticsearch"
+  #   endpoints:
+  #     - https://opensearch:9200
+  #   auth:
+  #     password: admin
+  #     strategy: basic
+  #     user: admin
+  #   tls:
+  #     verify_certificate: false
+  #   healthcheck:
+  #     enabled: false
+  #   api_version: v7
+  #   mode: bulk
+  #   bulk: 
+  #     index: otel-%Y-%m-%d
+

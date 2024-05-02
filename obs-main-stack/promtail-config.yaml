@@ -1,0 +1,44 @@
+server:
+  http_listen_port: 9080
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: syslogs
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail_sys"]
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_label_logging']
+        target_label: 'job'
+      - source_labels: ['__meta_docker_container_label_tenant_id']
+        target_label: 'tenant_id'
+  - job_name: app_logs
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail_app"]
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_label_logging']
+        target_label: 'job'
+      - source_labels: ['__meta_docker_container_label_tenant_id']
+        target_label: 'tenant_id'
+      - source_labels: ['__meta_docker_container_label_service_name']
+        target_label: 'service_name'
+      - source_labels: ['__meta_docker_container_label_service_namespace']
+        target_label: 'service_namespace'

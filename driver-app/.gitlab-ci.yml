@@ -1,0 +1,9 @@
+include:
+  - project: "nautilus-platform/templates/cicd-templates"
+    file: "/express-server/jobs.yml"
+    ref: main # can be branch name or ci tag or SHA, defaults to HEAD if not set
+
+variables:
+  NODE_VERSION: "20.12"
+  UI_IMAGE_NAME: "${DOCKER_REGISTRY}/nautilus/observability-platform/driver-app"
+  UI_PORTAINER_DEPLOY_WEBHOOK: ""

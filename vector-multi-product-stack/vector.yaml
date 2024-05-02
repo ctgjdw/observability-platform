@@ -1,0 +1,53 @@
+sources:
+  folders_product_logs:
+    type: docker_logs
+    docker_host: /var/run/docker.sock
+    include_labels:
+      - "product=folders"
+
+  common_apps_product_logs:
+    type: docker_logs
+    docker_host: /var/run/docker.sock
+    include_labels:
+      - "product=common-apps"
+
+transforms:
+  clean_docker_labels:
+    inputs:
+      - "*_product_logs"
+    type: "remap"
+    source: |l
+      .label."com.docker.compose.project.name" = del(.label."com.docker.compose.project")
+  # https://grokconstructor.appspot.com/do/match#result to test grok parsing
+  parse_log4j2:
+    inputs:
+      - "clean_docker_labels"
+    type: "remap"
+    source: |
+      ". = parse_json!(.message)"
+
+sinks:
+  logs_console:
+    type: console
+    encoding:
+      codec: json
+    inputs:
+      - parse_log4j2
+  logs_es_ingest:
+    inputs:
+      - "parse_log4j2"
+    type: "elasticsearch"
+    endpoints:
+      - https://opensearch:9200
+    auth:
+      password: admin
+      strategy: basic
+      user: admin
+    tls:
+      verify_certificate: false
+    healthcheck:
+      enabled: false
+    api_version: v7
+    mode: bulk
+    bulk:
+      index: "logs-{{ .label.product }}-%Y-%m-%d"

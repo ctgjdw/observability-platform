@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  common-apps-api-server:
+    image: driver-app:1.0.0
+    container_name: common-apps-api-server
+    labels:
+      product: "common-apps"
+      app: "search"
+    environment:
+      - SERVER_PORT=5055
+    ports:
+      - 5055:5055
+    networks:
+      - host-net
+
+  folders-api-server:
+    image: driver-app:1.0.0
+    container_name: folders-api-server
+    labels:
+      product: "folders"
+      app: "scan"
+    environment:
+      - SERVER_PORT=5056
+    ports:
+      - 5056:5056
+    networks:
+      - host-net
+
+  vector:
+    image: timberio/vector:nightly-2024-02-14-alpine
+    labels:
+      logging: "promtail_sys"
+      tenant_id: "admin"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./vector.yaml:/etc/vector/vector.yaml
+    networks:
+      - host-net
+
+networks:
+  host-net:
+    external: true

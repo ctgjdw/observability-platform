@@ -1,0 +1,39 @@
+receivers:
+  otlp/collector1:
+    protocols:
+      http:
+        endpoint: "otel_collector_2:4318" 
+
+exporters:
+  debug:
+    verbosity: detailed
+  otlphttp:
+    endpoint: "http://otel_collector:4318"
+    tls:
+      insecure: true
+    headers:
+      x-scope-orgid: ${env:OTEL_SERVICE_NAMESPACE}
+
+processors:
+  attributes/service_namespace:
+    actions:
+      - key: service_namespace
+        value: ${env:OTEL_SERVICE_NAMESPACE}
+        action: insert
+  attributes/service_name:
+    actions:
+      - key: service_name
+        value: ${env:OTEL_SERVICE_NAME}
+        action: insert
+
+
+service:
+  telemetry:
+    logs:
+      level: DEBUG
+    metrics:
+      level: detailed
+  pipelines:
+    traces:
+      receivers: [otlp/collector1]
+      exporters: [debug, otlphttp]

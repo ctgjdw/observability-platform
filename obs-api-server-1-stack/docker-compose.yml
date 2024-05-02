@@ -1,0 +1,59 @@
+version: "3.7"
+
+services:
+  api-server-1a:
+    image: driver-app:1.0.0
+    container_name: api-server-1a
+    labels:
+      logging: "promtail_app"
+      tenant_id: "api-server-1"
+      service_namespace: "api-server-1"
+      service_name: "api-server-1a"
+    environment:
+      - OTEL_COLLECTOR_HOST=http://otel_collector_1:4318
+      - OTEL_SERVICE_NAMESPACE=api-server-1
+      - OTEL_SERVICE_NAME=api-server-1a
+      - OTEL_SERVICE_VERSION=1.0.0x
+      - SERVER_PORT=5050
+    ports:
+      - 5050:5050
+    networks:
+      - host-net
+
+  api-server-1b:
+    image: driver-app:1.0.0
+    container_name: api-server-1b
+    labels:
+      logging: "promtail_app"
+      tenant_id: "api-server-1"
+      service_namespace: "api-server-1"
+      service_name: "api-server-1b"
+    environment:
+      - OTEL_COLLECTOR_HOST=http://otel_collector_1:4318
+      - OTEL_SERVICE_NAMESPACE=api-server-1
+      - OTEL_SERVICE_NAME=api-server-1b
+      - OTEL_SERVICE_VERSION=1.0.0
+      - SERVER_PORT=5051
+    ports:
+      - 5051:5051
+    networks:
+      - host-net
+
+  otel_collector_1:
+    image: otel/opentelemetry-collector-contrib:latest
+    labels:
+      logging: "promtail_sys"
+      tenant_id: "admin"
+    hostname: otel_collector_1
+    container_name: otel_collector_1
+    command:
+      - "--config=/conf/config.yaml"
+    volumes:
+      - ./otel-collector-config.yaml:/conf/config.yaml
+    restart: on-failure
+    networks:
+      - host-net
+
+networks:
+  host-net:
+    external: true
