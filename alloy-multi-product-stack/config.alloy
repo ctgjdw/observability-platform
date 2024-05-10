@@ -2,20 +2,38 @@ discovery.docker "linux" {
   host = "unix:///var/run/docker.sock"
   filter {
     name = "label"
-    values = ["product=*"] 
+    values = ["product"] 
   }
+}
+
+discovery.relabel "map_metadata" {
+    targets = discovery.docker.linux.targets
+    
+    rule {
+        action = "labelmap"
+        regex = "__meta_docker_(.*)"
+        replacement = "$1"
+    }
+
+    rule {
+        action = "labeldrop"
+        regex = "(?:network.*|port.*)"
+    }
 }
 
 loki.source.docker "default" {
   host       = "unix:///var/run/docker.sock"
-  targets    = discovery.docker.linux.targets
-  forward_to = [loki.process.docker.receiver]
+  targets    = discovery.relabel.map_metadata.output
+  forward_to = [loki.write.local.receiver,loki.echo.debug.receiver]
+  labels = {
+    collector = "alloy",
+  }
 }
 
-loki.process "docker" {
-  forward_to = [loki.echo.debug.receiver]
-
-  stage.docker { }
+loki.write "local" {
+    endpoint {
+        url = "http://loki:3100/loki/api/v1/push"
+    }
 }
 
 loki.echo "debug" { }
