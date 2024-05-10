@@ -1,0 +1,45 @@
+version: '3.7'
+
+services:
+    common-apps-api-server:
+        image: driver-app:1.0.0
+        container_name: common-apps-api-server
+        labels:
+            product: 'common-apps'
+            app: 'search'
+        environment:
+            - SERVER_PORT=5055
+        ports:
+            - 5055:5055
+        networks:
+            - host-net
+
+    folders-api-server:
+        image: driver-app:1.0.0
+        container_name: folders-api-server
+        labels:
+            product: 'folders'
+            app: 'scan'
+        environment:
+            - SERVER_PORT=5056
+        ports:
+            - 5056:5056
+        networks:
+            - host-net
+
+    alloy:
+        image: grafana/alloy:latest
+        volumes:
+            - ./config.alloy:/etc/alloy/config.alloy
+            - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+            - 12345:12345
+        command:
+            - run
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --storage.path=/var/lib/alloy/data
+            - /etc/alloy/config.alloy
+
+networks:
+    host-net:
+        external: true

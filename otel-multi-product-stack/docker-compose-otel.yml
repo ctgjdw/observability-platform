@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+    otel_collector_1:
+        image: otel/opentelemetry-collector-contrib:latest
+        labels:
+            logging: 'promtail_sys'
+            tenant_id: 'admin'
+        hostname: otel_collector_1
+        container_name: otel_collector_1
+        command:
+            - '--config=/conf/config.yaml'
+        volumes:
+            - ./otel-collector-config.yaml:/conf/config.yaml
+        restart: on-failure
+        networks:
+            - host-net
+        ports:
+            - 8086:8086
+
+networks:
+    host-net:
+        external: true

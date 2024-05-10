@@ -1,0 +1,21 @@
+discovery.docker "linux" {
+  host = "unix:///var/run/docker.sock"
+  filter {
+    name = "label"
+    values = ["product=*"] 
+  }
+}
+
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.linux.targets
+  forward_to = [loki.process.docker.receiver]
+}
+
+loki.process "docker" {
+  forward_to = [loki.echo.debug.receiver]
+
+  stage.docker { }
+}
+
+loki.echo "debug" { }
