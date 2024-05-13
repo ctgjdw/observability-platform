@@ -1,0 +1,44 @@
+distributor:
+  receivers:                           # this configuration will listen on all ports and protocols that tempo is capable of.
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+
+ingester:
+  max_block_duration: 5m               # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally
+
+compactor:
+  compaction:
+    block_retention: 168h                # overall Tempo trace retention.
+    max_block_bytes: 20_000_000_000
+    compaction_window: 12h
+    compacted_block_retention: 1h
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: docker-compose
+  processor:
+    span_metrics:
+      dimensions:
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
+storage:
+  trace:
+    backend: local                     # backend configuration to use
+    wal:
+      path: /tmp/tempo/wal             # where to store the the wal locally
+    local:
+      path: /tmp/tempo/blocks
+
+overrides:
+  metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator
+
+usage_report:
+  reporting_enabled: false

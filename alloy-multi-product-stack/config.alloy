@@ -1,4 +1,11 @@
-discovery.docker "linux" {
+// Logs ingestion to Loki
+logging {
+  level = "debug"
+  format   = "json"
+  write_to = [loki.write.default.receiver]
+}
+
+discovery.docker "default" {
   host = "unix:///var/run/docker.sock"
   filter {
     name = "label"
@@ -7,7 +14,7 @@ discovery.docker "linux" {
 }
 
 discovery.relabel "map_metadata" {
-    targets = discovery.docker.linux.targets
+    targets = discovery.docker.default.targets
     
     rule {
         action = "labelmap"
@@ -24,16 +31,116 @@ discovery.relabel "map_metadata" {
 loki.source.docker "default" {
   host       = "unix:///var/run/docker.sock"
   targets    = discovery.relabel.map_metadata.output
-  forward_to = [loki.write.local.receiver,loki.echo.debug.receiver]
+  forward_to = [loki.write.default.receiver]
   labels = {
     collector = "alloy",
   }
 }
 
-loki.write "local" {
+loki.write "default" {
     endpoint {
         url = "http://loki:3100/loki/api/v1/push"
     }
 }
 
-loki.echo "debug" { }
+// Traces collection to Tempo
+
+otelcol.auth.headers "default" {
+	header {
+		key          = "X-Scope-OrgID"
+		from_context = "X-Scope-OrgID"
+	}
+}
+
+otelcol.receiver.otlp "default" {
+	http {
+		endpoint         = "alloy:4318"
+		include_metadata = true
+	}
+
+	output {
+		metrics = [otelcol.processor.batch.default.input]
+		logs    = []
+		traces  = [otelcol.processor.batch.default.input, otelcol.connector.spanmetrics.default.input]
+	}
+}
+
+otelcol.processor.batch "default" {
+	output {
+		metrics = [otelcol.exporter.prometheus.prom.input]
+		logs    = []
+		traces  = [otelcol.exporter.otlphttp.default.input]
+	}
+}
+
+otelcol.exporter.otlphttp "default" {
+	client {
+		endpoint           = "http://tempo:4318"
+		http2_ping_timeout = "0s"
+		auth               = otelcol.auth.headers.default.handler
+	}
+}
+
+// Metrics
+
+prometheus.exporter.self "default" {
+}
+
+prometheus.scrape "alloy" {
+  targets    = prometheus.exporter.self.default.targets
+  forward_to = [prometheus.remote_write.prom.receiver]
+}
+
+otelcol.connector.spanmetrics "default" {
+	dimension {
+		name = "http.method"
+	}
+
+	dimension {
+		name = "http.status_code"
+	}
+
+	dimension {
+		name = "http.route"
+	}
+
+	dimension {
+		name = "service.namespace"
+	}
+
+	histogram {
+		explicit { }
+	}
+
+	events {
+		dimension {
+			name = "http.method"
+		}
+
+		dimension {
+			name = "http.status_code"
+		}
+
+		dimension {
+			name = "http.route"
+		}
+
+		dimension {
+			name = "service.namespace"
+		}
+	}
+
+	output {
+		metrics = [otelcol.exporter.prometheus.prom.input]
+	}
+}
+
+otelcol.exporter.prometheus "prom" {
+  forward_to = [prometheus.remote_write.prom.receiver]
+}
+
+prometheus.remote_write "prom" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}

@@ -1,0 +1,131 @@
+otelcol.auth.headers "default" {
+	header {
+		key          = "X-Scope-OrgID"
+		from_context = "X-Scope-OrgID"
+	}
+}
+
+otelcol.receiver.otlp "default_collector1" {
+	http {
+		endpoint         = "otel_collector:4318"
+		include_metadata = true
+	}
+
+	output {
+		metrics = []
+		logs    = []
+		traces  = [otelcol.processor.batch.default.input]
+	}
+}
+
+otelcol.processor.batch "default" {
+	output {
+		metrics = []
+		logs    = []
+		traces  = [otelcol.connector.spanmetrics.default.input, otelcol.exporter.otlphttp.default.input]
+	}
+}
+
+otelcol.exporter.otlphttp "default" {
+	client {
+		endpoint           = "http://tempo:4318"
+		http2_ping_timeout = "0s"
+		auth               = otelcol.auth.headers.default.handler
+	}
+}
+
+otelcol.connector.spanmetrics "default" {
+	dimension {
+		name = "http.method"
+	}
+
+	dimension {
+		name = "http.status_code"
+	}
+
+	dimension {
+		name = "http.route"
+	}
+
+	dimension {
+		name = "service.namespace"
+	}
+
+	histogram {
+		explicit { }
+	}
+
+	events {
+		dimension {
+			name = "http.method"
+		}
+
+		dimension {
+			name = "http.status_code"
+		}
+
+		dimension {
+			name = "http.route"
+		}
+
+		dimension {
+			name = "service.namespace"
+		}
+	}
+
+	output {
+		metrics = []
+	}
+}
+
+otelcol.exporter.otlphttp "spanmetrics_default" {
+	client {
+		endpoint           = "http://tempo:4318"
+		http2_ping_timeout = "0s"
+		auth               = otelcol.auth.headers.default.handler
+	}
+}
+
+otelcol.connector.spanmetrics "spanmetrics_default" {
+	dimension {
+		name = "http.method"
+	}
+
+	dimension {
+		name = "http.status_code"
+	}
+
+	dimension {
+		name = "http.route"
+	}
+
+	dimension {
+		name = "service.namespace"
+	}
+
+	histogram {
+		explicit { }
+	}
+
+	events {
+		dimension {
+			name = "http.method"
+		}
+
+		dimension {
+			name = "http.status_code"
+		}
+
+		dimension {
+			name = "http.route"
+		}
+
+		dimension {
+			name = "service.namespace"
+		}
+	}
+
+	output {
+		metrics = [otelcol.exporter.otlphttp.spanmetrics_default.input]
+	}
+}

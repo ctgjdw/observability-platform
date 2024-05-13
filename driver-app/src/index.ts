@@ -7,7 +7,6 @@ import morgan from "morgan"
 import { API_PREPEND } from "./configs/generalConfig";
 import CustomStream from "./middlewares/morganMiddleware";
 import userRouterV1 from "./routes/v1/userRouter";
-import tweetRouterV1 from "./routes/v1/tweetRouter";
 import Logger from "./utils/logger";
 import { databaseService } from "./services/databaseService";
 import healthCheckRouter from "./routes/healthCheckRouter";
@@ -25,7 +24,6 @@ app.use(express.urlencoded({ extended: true })); // parses urlencoded bodies wit
 app.use(morgan("combined", {stream: CustomStream})); // outputs a rich apache standard logging for every request made
 
 app.use(`${API_PREPEND}/v1/user`,userRouterV1.router);
-app.use(`${API_PREPEND}/v1/tweet`,tweetRouterV1.router);
 
 app.use("/health", healthCheckRouter.router); // add health check for container platform
 
