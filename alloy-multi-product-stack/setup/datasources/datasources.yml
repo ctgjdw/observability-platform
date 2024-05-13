@@ -85,3 +85,10 @@ datasources:
     isDefault: false
     version: 1
     editable: false
+    jsonData:
+      derivedFields:
+      - datasourceName: Tempo
+        datasourceUid: tempo1
+        matcherRegex: \"trace_id\":\"(\w+)\"
+        name: trace_id
+        url: $${__value.raw}
