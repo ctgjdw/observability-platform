@@ -1,0 +1,11 @@
+src/
+tsconfig.json
+.eslintrc
+.gitignore
+.gitlab-ci.yml
+.jscpd.json
+.npmrc
+.override.eslintrc
+.prettierrc
+.unimportedrc.json
+.vscode
