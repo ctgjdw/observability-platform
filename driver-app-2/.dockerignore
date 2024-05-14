@@ -1,0 +1,12 @@
+node_modules
+
+*.md
+
+.prettierrc
+.npmignore
+.mega-linter.yml
+.gitignore
+.eslintrc
+.eslintignore
+.env.template
+.gitlab
