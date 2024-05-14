@@ -16,7 +16,7 @@ transforms:
     inputs:
       - "*_product_logs"
     type: "remap"
-    source: |l
+    source: |
       .label."com.docker.compose.project.name" = del(.label."com.docker.compose.project")
   # https://grokconstructor.appspot.com/do/match#result to test grok parsing
   parse_log4j2:

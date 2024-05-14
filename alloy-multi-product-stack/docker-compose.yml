@@ -50,7 +50,7 @@ services:
             - /etc/alloy/config.alloy
         networks:
             - host-net
-    
+
     grafana:
         image: grafana/grafana-enterprise:latest
         labels:
@@ -70,7 +70,7 @@ services:
             - 3000:3000
         networks:
             - host-net
-    
+
     loki:
         image: grafana/loki:main
         labels:
@@ -83,7 +83,7 @@ services:
         command: ['-config.file=/etc/loki/local-config.yaml', '-config.expand-env=true']
         networks:
             - host-net
-    
+
     tempo:
         image: grafana/tempo:main-24cbe3e
         labels:
@@ -98,7 +98,7 @@ services:
             - ./tempo-data:/tmp/tempo
         networks:
             - host-net
-    
+
     opensearch:
         image: opensearchproject/opensearch:2.8.0
         container_name: opensearch
@@ -139,7 +139,7 @@ services:
             OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
         networks:
             - host-net
-    
+
     prometheus:
         image: rapidfort/prometheus:latest
         labels:
@@ -154,13 +154,20 @@ services:
             - 9090:9090
         networks:
             - host-net
-    
+
     node-exporter:
         image: rapidfort/node-exporter:1.7-debian-11
         networks:
             - host-net
         ports:
             - 9100:9100
+
+    vector:
+        image: timberio/vector:nightly-2024-02-14-alpine
+        volumes:
+            - ./vector.yaml:/etc/vector/vector.yaml
+        networks:
+            - host-net
 
 networks:
     host-net:
