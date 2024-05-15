@@ -3,6 +3,9 @@ version: '3.7'
 services:
     driver-app-1:
         image: driver-app:1.0.0
+        build:
+            context: ../driver-app
+            dockerfile: Dockerfile
         container_name: driver-app-1
         labels:
             product: 'common-svc'
@@ -19,6 +22,9 @@ services:
             - host-net
 
     driver-app-2:
+        build:
+            context: ../driver-app-esm
+            dockerfile: Dockerfile
         image: driver-app-2:1.0.0
         container_name: driver-app-2
         labels:
