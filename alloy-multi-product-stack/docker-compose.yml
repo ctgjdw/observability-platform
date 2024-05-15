@@ -23,7 +23,7 @@ services:
         container_name: driver-app-2
         labels:
             product: 'common-svc'
-            app: 'driver-app-1'
+            app: 'driver-app-2'
         environment:
             - SERVER_PORT=5000
             - OTEL_COLLECTOR_HOST=http://alloy:4318
