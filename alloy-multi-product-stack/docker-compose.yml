@@ -45,6 +45,31 @@ services:
         networks:
             - host-net
 
+    driver-app-2-fastapi:
+        build:
+            context: ../fastapi-app
+            dockerfile: Dockerfile
+        image: driver-app-2-fastapi:1.0.0
+        container_name: driver-app-2-fastapi
+        labels:
+            product: 'nautilus'
+            app: 'driver-app-2-fastapi'
+        environment:
+            - OTEL_SERVICE_NAME=driver-app-2-fastapi
+            - OTEL_SERVICE_NAMESPACE=nautilus
+            - OTEL_SERVICE_VERSION=1.0.0
+            - OTEL_TRACES_EXPORTER=otlp
+            - OTEL_METRICS_EXPORTER=otlp
+            - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
+            - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+            - OTEL_PYTHON_LOG_CORRELATION=true
+            - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+            - API_URL=http://driver-app-1:5055
+        ports:
+            - 8000:8000
+        networks:
+            - host-net
+
     alloy:
         image: grafana/alloy:latest
         volumes:
