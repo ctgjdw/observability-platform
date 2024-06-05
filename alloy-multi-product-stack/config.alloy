@@ -8,6 +8,9 @@ logging {
 loki.write "default" {
     endpoint {
         url = "http://loki:3100/loki/api/v1/push"
+		headers = {
+		"X-Scope-OrgID" = "common_services",
+		}
     }
 }
 
@@ -110,5 +113,8 @@ otelcol.exporter.prometheus "prom" {
 prometheus.remote_write "prom" {
   endpoint {
     url = "http://prometheus:9090/api/v1/write"
+	headers = {
+		"X-Scope-OrgID" = env("OTEL_SERVICE_NAMESPACE"),
+	}
   }
 }

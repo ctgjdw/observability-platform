@@ -49,6 +49,7 @@ sinks:
     endpoint: http://loki:3100
     encoding:
       codec: text
+    tenant_id: "{{ .service_namespace }}"
     labels:
       container_created_at: "{{ .container_created_at }}"
       container_id: "{{ .container_id }}"
