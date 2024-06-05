@@ -1,18 +1,21 @@
 sources:
-  alloy_otlp_receiver:
-    type: opentelemetry
-    grpc:
-      address: 0.0.0.0:4317
-    http:
-      address: 0.0.0.0:4318
+  docker_logs:
+    type: docker_logs
+    docker_host: /var/run/docker.sock
+    include_labels:
+      - "logger=vector"
+      - service_namespace
+      - service_name
 
 transforms:
-  drop_loki_labels:
-    type: remap
+  clean_docker_labels:
     inputs:
-      - alloy_otlp_receiver.logs
+      - docker_logs
+    type: "remap"
     source: |
-      del(.attributes."loki.attribute.labels")
+      .service_name = .label.service_name
+      .service_namespace = .label.service_namespace
+      del(.label)
 
 sinks:
   logs_console:
@@ -20,10 +23,10 @@ sinks:
     encoding:
       codec: json
     inputs:
-      - drop_loki_labels
+      - clean_docker_labels
   logs_es_ingest:
     inputs:
-      - "drop_loki_labels"
+      - clean_docker_labels
     type: "elasticsearch"
     endpoints:
       - https://opensearch:9200
@@ -38,4 +41,22 @@ sinks:
     api_version: v7
     mode: bulk
     bulk:
-      index: 'logs-{{ .attributes."container_label_product" }}-%Y-%m-%d'
+      index: "logs-{{ .service_namespace }}-{{ .service_name }}"
+  loki_ingest:
+    type: loki
+    inputs:
+      - clean_docker_labels
+    endpoint: http://loki:3100
+    encoding:
+      codec: text
+    labels:
+      container_created_at: "{{ .container_created_at }}"
+      container_id: "{{ .container_id }}"
+      container_name: "{{ .container_name }}"
+      host: "{{ .host }}"
+      image: "{{ .image }}"
+      stream: "{{ .stream }}"
+      timestamp: "{{ .timestamp }}"
+      service_name: "{{ .service_name }}"
+      service_namespace: "{{ .service_namespace }}"
+      logger: vector

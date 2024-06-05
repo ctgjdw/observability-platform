@@ -1,58 +1,14 @@
 // Logs ingestion to Loki
 logging {
-  level = "debug"
+  level = "info"
   format   = "json"
   write_to = [loki.write.default.receiver]
-}
-
-discovery.docker "default" {
-  host = "unix:///var/run/docker.sock"
-  filter {
-    name = "label"
-    values = ["product"] 
-  }
-}
-
-discovery.relabel "map_metadata" {
-    targets = discovery.docker.default.targets
-    
-    rule {
-        action = "labelmap"
-        regex = "__meta_docker_(.*)"
-        replacement = "$1"
-    }
-
-    rule {
-        action = "labeldrop"
-        regex = "(?:network.*|port.*)"
-    }
-}
-
-loki.source.docker "default" {
-  host       = "unix:///var/run/docker.sock"
-  targets    = discovery.relabel.map_metadata.output
-  forward_to = [loki.write.default.receiver, otelcol.receiver.loki.parse_to_otlp.receiver]
-  labels = {
-    collector = "alloy",
-  }
 }
 
 loki.write "default" {
     endpoint {
         url = "http://loki:3100/loki/api/v1/push"
     }
-}
-
-otelcol.receiver.loki "parse_to_otlp" {
-  output {
-    logs = [otelcol.exporter.otlphttp.vector.input]
-  }
-}
-
-otelcol.exporter.otlphttp "vector" {
-  client {
-    endpoint = "http://vector:4318"
-  }
 }
 
 // Traces collection to Tempo

@@ -8,12 +8,13 @@ services:
             dockerfile: Dockerfile
         container_name: driver-app-1
         labels:
-            product: 'common-svc'
-            app: 'driver-app-1'
+            service_namespace: common-services
+            service_name: driver-app-1
+            logger: vector
         environment:
             - SERVER_PORT=5055
             - OTEL_COLLECTOR_HOST=http://alloy:4318
-            - OTEL_SERVICE_NAMESPACE=common-svc
+            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=common-services
             - OTEL_SERVICE_NAME=driver-app-1
             - OTEL_SERVICE_VERSION=1.0.0
         ports:
@@ -28,14 +29,14 @@ services:
         image: driver-app-2:1.0.0
         container_name: driver-app-2
         labels:
-            product: 'common-svc'
-            app: 'driver-app-2'
+            logger: vector
+            service_namespace: common_services
+            service_name: driver-app-2
         environment:
             - SERVER_PORT=5000
-            - OTEL_COLLECTOR_HOST=http://alloy:4318
-            - OTEL_SERVICE_NAMESPACE=common-svc
             - OTEL_SERVICE_NAME=driver-app-2
             - OTEL_SERVICE_VERSION=1.0.0
+            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=common_services
             - OTEL_TRACES_EXPORTER=otlp
             - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318
             - OTEL_NODE_RESOURCE_DETECTORS=env,host,os
@@ -52,11 +53,12 @@ services:
         image: driver-app-2-fastapi:1.0.0
         container_name: driver-app-2-fastapi
         labels:
-            product: 'nautilus'
-            app: 'driver-app-2-fastapi'
+            logger: vector
+            service_namespace: 'nautilus'
+            service_name: 'driver-app-2-fastapi'
         environment:
             - OTEL_SERVICE_NAME=driver-app-2-fastapi
-            - OTEL_SERVICE_NAMESPACE=nautilus
+            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=nautilus
             - OTEL_SERVICE_VERSION=1.0.0
             - OTEL_TRACES_EXPORTER=otlp
             - OTEL_METRICS_EXPORTER=otlp
@@ -75,7 +77,6 @@ services:
         volumes:
             - ./config.alloy:/etc/alloy/config.alloy
             - ./otel-collector-config.yaml:/etc/alloy/otel.yaml
-            - /var/run/docker.sock:/var/run/docker.sock
         ports:
             - 12345:12345
             - 4318:4318
@@ -201,6 +202,7 @@ services:
     vector:
         image: timberio/vector:nightly-2024-02-14-alpine
         volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
             - ./vector.yaml:/etc/vector/vector.yaml
         networks:
             - host-net
