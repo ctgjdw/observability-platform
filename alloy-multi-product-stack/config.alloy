@@ -15,14 +15,14 @@ loki.write "default" {
 
 otelcol.auth.headers "default" {
 	header {
-		key          = "X-Scope-OrgID"
-		from_context = "X-Scope-OrgID"
+		key = "X-Scope-OrgID"
+		value = env("OTEL_SERVICE_NAMESPACE")
 	}
 }
 
 otelcol.receiver.otlp "default" {
 	http {
-		endpoint         = "alloy:4318"
+		endpoint         = "0.0.0.0:4318"
 		include_metadata = true
 	}
 

@@ -74,8 +74,11 @@ datasources:
         enabled: true
       search:
         hide: false
-    readOnly: false
+      httpHeaderName1: "X-Scope-OrgID"
+    secureJsonData:
+      httpHeaderValue1: "nautilus"
     editable: true
+    readOnly: false
   - name: Loki
     type: loki
     access: proxy
@@ -87,8 +90,8 @@ datasources:
     editable: false
     jsonData:
       derivedFields:
-      - datasourceName: Tempo
-        datasourceUid: tempo1
-        matcherRegex: \"trace_id\":\"(\w+)\"
-        name: trace_id
-        url: $${__value.raw}
+        - datasourceName: Tempo
+          datasourceUid: tempo1
+          matcherRegex: \"trace_id\":\"(\w+)\"
+          name: trace_id
+          url: $${__value.raw}
