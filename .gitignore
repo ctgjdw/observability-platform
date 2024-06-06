@@ -1,3 +1,4 @@
 grafana-data
 tempo-data
 opensearch-data
+__pycache__
