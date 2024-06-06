@@ -96,6 +96,6 @@ datasources:
           datasourceUid: tempo1
           matcherRegex: \"trace_id\":\"(\w+)\"
           name: trace_id
-          url: ${__value.raw}
+          url: '$${__value.raw}'
     secureJsonData:
       httpHeaderValue1: "common_services"

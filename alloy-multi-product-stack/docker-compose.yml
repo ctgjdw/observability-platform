@@ -8,7 +8,7 @@ services:
             dockerfile: Dockerfile
         container_name: driver-app-1
         labels:
-            service_namespace: common-services
+            service_namespace: common_services
             service_name: driver-app-1
             logger: vector
         environment:
