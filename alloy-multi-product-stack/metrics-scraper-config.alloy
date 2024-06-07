@@ -1,0 +1,43 @@
+prometheus.scrape "node_exporter" {
+  targets = [
+    {"__address__" = "node-exporter:9100"},
+  ]
+
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+prometheus.scrape "grafana" {
+  targets = [
+    {"__address__" = "grafana:3000"},
+  ]
+
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+prometheus.scrape "opensearch" {
+  targets = [
+    {"__address__" = "opensearch:9200"},
+  ]
+
+  basic_auth {
+    username = "admin"
+    password = "admin"
+  }
+
+  tls_config {
+    insecure_skip_verify = true
+  }
+
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  metrics_path = "/_prometheus/metrics"
+  scheme = "https"
+}
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+    headers = {
+		"X-Scope-OrgID" = "common_services",
+	}
+  }
+}

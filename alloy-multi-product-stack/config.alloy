@@ -112,7 +112,7 @@ otelcol.exporter.prometheus "prom" {
 
 prometheus.remote_write "prom" {
   endpoint {
-    url = "http://prometheus:9090/api/v1/write"
+    url = "http://mimir:9009/api/v1/push"
 	headers = {
 		"X-Scope-OrgID" = env("OTEL_SERVICE_NAMESPACE"),
 	}

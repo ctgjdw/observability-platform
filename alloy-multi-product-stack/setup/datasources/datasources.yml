@@ -21,7 +21,7 @@ datasources:
     uid: prom1
     # <string> Sets the data source's URL, including the
     # port.
-    url: http://prometheus:9090
+    url: http://mimir:9009/prometheus
     # <string> Sets the database user, if necessary.
     # user:
     # <string> Sets the database name, if necessary.
@@ -61,6 +61,10 @@ datasources:
     # <bool> Allows users to edit data sources from the
     # Grafana UI.
     editable: true
+    jsonData:
+      httpHeaderName1: "X-Scope-OrgID"
+    secureJsonData:
+      httpHeaderValue1: "common_services"
   - name: Tempo
     uid: tempo1
     type: tempo
