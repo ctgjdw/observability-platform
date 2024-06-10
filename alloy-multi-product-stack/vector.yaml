@@ -18,12 +18,12 @@ transforms:
       del(.label)
 
 sinks:
-  logs_console:
-    type: console
-    encoding:
-      codec: json
-    inputs:
-      - clean_docker_labels
+  # logs_console:
+  #   type: console
+  #   encoding:
+  #     codec: json
+  #   inputs:
+  #     - clean_docker_labels
   logs_es_ingest:
     inputs:
       - clean_docker_labels

@@ -49,3 +49,8 @@ async def getUser(name: str, email: str, password: str):
     except Exception as err:
         logging.error(err)
         raise HTTPException(detail=str(err), status_code=500) from err
+
+
+@app.get("/health")
+async def health():
+    return {"health": "ok"}

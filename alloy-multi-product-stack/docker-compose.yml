@@ -39,7 +39,7 @@ services:
             - OTEL_RESOURCE_ATTRIBUTES=service.namespace=common_services
             - OTEL_TRACES_EXPORTER=otlp
             - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy-common-services:4318
-            - OTEL_NODE_RESOURCE_DETECTORS=env,host,os
+            - OTEL_NODE_RESOURCE_DETECTORS=all
             - API_URL=http://driver-app-1:5055
         ports:
             - 5000:5000
@@ -66,11 +66,16 @@ services:
             - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
             - OTEL_PYTHON_LOG_CORRELATION=true
             - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+            - OTEL_PYTHON_EXCLUDED_URLS=\/health
             - API_URL=http://driver-app-1:5055
         ports:
             - 8000:8000
         networks:
             - host-net
+        healthcheck:
+            test: curl -f http://localhost:8000/health || exit 1
+            timeout: 15s
+            retries: 3
 
     alloy-nautilus:
         image: grafana/alloy:latest
@@ -213,10 +218,14 @@ services:
     mimir:
         image: grafana/mimir:latest
         volumes:
-          - ./mimir.yaml:/etc/mimir/config.yaml
-        command: ["--config.file", "/etc/mimir/config.yaml"]
+            - ./mimir.yaml:/etc/mimir/config.yaml
+        command: ['--config.file', '/etc/mimir/config.yaml']
         networks:
             - host-net
+        healthcheck:
+            test: wget --no-verbose --tries=1 --spider http://localhost:9009/ready || exit 1
+            timeout: 15s
+            retries: 3
 
     alloy-metrics-scraper:
         image: grafana/alloy:latest
@@ -231,7 +240,24 @@ services:
             - host-net
         environment:
             - OTEL_SERVICE_NAMESPACE=nautilus
-    
+
+    fast-api-load-test:
+        image: grafana/k6
+        environment:
+            - API_URL=driver-app-2-fastapi:8000
+            - K6_PROMETHEUS_RW_SERVER_URL=http://mimir:9009/api/v1/push
+            - K6_PROMETHEUS_RW_HEADERS_X-SCOPE-ORGID=common_services
+        depends_on:
+            mimir:
+                condition: service_healthy
+            driver-app-2-fastapi:
+                condition: service_healthy
+        volumes:
+            - ../fastapi-app/tests/k6.js:/test/k6.js
+        networks:
+            - host-net
+        command: ['run', '--out', 'experimental-prometheus-rw', '/test/k6.js']
+
 networks:
     host-net:
         external: true
