@@ -80,7 +80,7 @@ loki:
     readOnlyRootFilesystem: true
     capabilities:
       drop:
-        - ALL
+      - ALL
     allowPrivilegeEscalation: false
   # -- Should enableServiceLinks be enabled. Default to enable
   enableServiceLinks: true
@@ -280,7 +280,7 @@ loki:
     tracing:
       enabled: {{ .Values.loki.tracing.enabled }}
   # Should authentication be enabled
-  auth_enabled: false
+  auth_enabled: true
   # -- memberlist configuration (overrides embedded default)
   memberlistConfig: {}
   # -- Extra memberlist configuration
@@ -384,25 +384,25 @@ loki:
   # -- Check https://grafana.com/docs/loki/latest/configuration/#schema_config for more info on how to configure schemas
   schemaConfig:
     configs:
-      - from: "2024-01-01"
-        store: tsdb
-        index:
-          prefix: loki_index_
-          period: 24h
-        object_store: filesystem # we're storing on filesystem so there's no real persistence here.
-        schema: v13
+    - from: "2024-01-01"
+      store: tsdb
+      index:
+        prefix: loki_index_
+        period: 24h
+      object_store: filesystem # we're storing on filesystem so there's no real persistence here.
+      schema: v13
   # -- a real Loki install requires a proper schemaConfig defined above this, however for testing or playing around
   # you can enable useTestSchema
   useTestSchema: false
   testSchemaConfig:
     configs:
-      - from: 2024-04-01
-        store: tsdb
-        object_store: '{{ include "loki.testSchemaObjectStore" . }}'
-        schema: v13
-        index:
-          prefix: index_
-          period: 24h
+    - from: 2024-04-01
+      store: tsdb
+      object_store: '{{ include "loki.testSchemaObjectStore" . }}'
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
   # -- Check https://grafana.com/docs/loki/latest/configuration/#ruler for more info on configuring ruler
   rulerConfig: {}
   # -- Structured loki configuration, takes precedence over `loki.config`, `loki.schemaConfig`, `loki.storageConfig`
@@ -817,7 +817,7 @@ adminApi:
     readOnlyRootFilesystem: true
     capabilities:
       drop:
-        - ALL
+      - ALL
     allowPrivilegeEscalation: false
   # -- Update strategy
   strategy:
@@ -884,17 +884,17 @@ gateway:
     # -- Behavior policies while scaling.
     behavior: {}
     #    scaleUp:
-    #     stabilizationWindowSeconds: 300
-    #     policies:
-    #     - type: Pods
-    #       value: 1
-    #       periodSeconds: 60
-    #    scaleDown:
-    #     stabilizationWindowSeconds: 300
-    #     policies:
-    #     - type: Pods
-    #       value: 1
-    #       periodSeconds: 180
+  #     stabilizationWindowSeconds: 300
+  #     policies:
+  #     - type: Pods
+  #       value: 1
+  #       periodSeconds: 60
+  #    scaleDown:
+  #     stabilizationWindowSeconds: 300
+  #     policies:
+  #     - type: Pods
+  #       value: 1
+  #       periodSeconds: 180
   deploymentStrategy:
     type: RollingUpdate
   image:
@@ -939,7 +939,7 @@ gateway:
     readOnlyRootFilesystem: true
     capabilities:
       drop:
-        - ALL
+      - ALL
     allowPrivilegeEscalation: false
   # -- Resource requests and limits for the gateway
   resources: {}
@@ -952,10 +952,10 @@ gateway:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: gateway
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: gateway
+        topologyKey: kubernetes.io/hostname
   # -- DNS config for gateway pods
   dnsConfig: {}
   # -- Node selector for gateway pods
@@ -992,16 +992,16 @@ gateway:
     labels: {}
     # -- Hosts configuration for the gateway ingress, passed through the `tpl` function to allow templating
     hosts:
-      - host: gateway.loki.example.com
-        paths:
-          - path: /
-            # -- pathType (e.g. ImplementationSpecific, Prefix, .. etc.) might also be required by some Ingress Controllers
-            # pathType: Prefix
+    - host: gateway.loki.example.com
+      paths:
+      - path: /
+        # -- pathType (e.g. ImplementationSpecific, Prefix, .. etc.) might also be required by some Ingress Controllers
+    # pathType: Prefix
     # -- TLS configuration for the gateway ingress. Hosts passed through the `tpl` function to allow templating
     tls:
-      - secretName: loki-gateway-tls
-        hosts:
-          - gateway.loki.example.com
+    - secretName: loki-gateway-tls
+      hosts:
+      - gateway.loki.example.com
   # Basic auth configuration
   basicAuth:
     # -- Enables basic authentication for the gateway
@@ -1090,7 +1090,7 @@ enterpriseGateway:
     readOnlyRootFilesystem: true
     capabilities:
       drop:
-        - ALL
+      - ALL
     allowPrivilegeEscalation: false
   # -- If you want to use your own proxy URLs, set this to false.
   useDefaultProxyURLs: true
@@ -1144,48 +1144,48 @@ ingress:
     # If deployment mode is SimpleScalable, the requests are forwarded to write k8s service: `{{"loki.writeFullname"}}`.
     # If deployment mode is SingleBinary, the requests are forwarded to the central/single k8s service: `{{"loki.singleBinaryFullname"}}`
     distributor:
-      - /api/prom/push
-      - /loki/api/v1/push
-      - /otlp/v1/logs
+    - /api/prom/push
+    - /loki/api/v1/push
+    - /otlp/v1/logs
     # -- Paths that are exposed by Loki Query Frontend.
     # If deployment mode is Distributed, the requests are forwarded to the service: `{{"loki.queryFrontendFullname"}}`.
     # If deployment mode is SimpleScalable, the requests are forwarded to write k8s service: `{{"loki.readFullname"}}`.
     # If deployment mode is SingleBinary, the requests are forwarded to the central/single k8s service: `{{"loki.singleBinaryFullname"}}`
     queryFrontend:
-      - /api/prom/query
-      # this path covers labels and labelValues endpoints
-      - /api/prom/label
-      - /api/prom/series
-      - /api/prom/tail
-      - /loki/api/v1/query
-      - /loki/api/v1/query_range
-      - /loki/api/v1/tail
-      # this path covers labels and labelValues endpoints
-      - /loki/api/v1/label
-      - /loki/api/v1/labels
-      - /loki/api/v1/series
-      - /loki/api/v1/index/stats
-      - /loki/api/v1/index/volume
-      - /loki/api/v1/index/volume_range
-      - /loki/api/v1/format_query
-      - /loki/api/v1/detected_fields
-      - /loki/api/v1/detected_labels
-      - /loki/api/v1/patterns
+    - /api/prom/query
+    # this path covers labels and labelValues endpoints
+    - /api/prom/label
+    - /api/prom/series
+    - /api/prom/tail
+    - /loki/api/v1/query
+    - /loki/api/v1/query_range
+    - /loki/api/v1/tail
+    # this path covers labels and labelValues endpoints
+    - /loki/api/v1/label
+    - /loki/api/v1/labels
+    - /loki/api/v1/series
+    - /loki/api/v1/index/stats
+    - /loki/api/v1/index/volume
+    - /loki/api/v1/index/volume_range
+    - /loki/api/v1/format_query
+    - /loki/api/v1/detected_fields
+    - /loki/api/v1/detected_labels
+    - /loki/api/v1/patterns
     # -- Paths that are exposed by Loki Ruler.
     # If deployment mode is Distributed, the requests are forwarded to the service: `{{"loki.rulerFullname"}}`.
     # If deployment mode is SimpleScalable, the requests are forwarded to k8s service: `{{"loki.backendFullname"}}`.
     # If deployment mode is SimpleScalable but `read.legacyReadTarget` is `true`, the requests are forwarded to k8s service: `{{"loki.readFullname"}}`.
     # If deployment mode is SingleBinary, the requests are forwarded to the central/single k8s service: `{{"loki.singleBinaryFullname"}}`
     ruler:
-      - /api/prom/rules
-      - /api/prom/api/v1/rules
-      - /api/prom/api/v1/alerts
-      - /loki/api/v1/rules
-      - /prometheus/api/v1/rules
-      - /prometheus/api/v1/alerts
+    - /api/prom/rules
+    - /api/prom/api/v1/rules
+    - /api/prom/api/v1/alerts
+    - /loki/api/v1/rules
+    - /prometheus/api/v1/rules
+    - /prometheus/api/v1/alerts
   # -- Hosts configuration for the ingress, passed through the `tpl` function to allow templating
   hosts:
-    - loki.example.com
+  - loki.example.com
   # -- TLS configuration for the ingress. Hosts passed through the `tpl` function to allow templating
   tls: []
 #    - hosts:
@@ -1277,10 +1277,10 @@ singleBinary:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: single-binary
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: single-binary
+        topologyKey: kubernetes.io/hostname
   # -- DNS config for single binary pods
   dnsConfig: {}
   # -- Node selector for single binary pods
@@ -1332,14 +1332,14 @@ write:
       # -- see https://github.com/grafana/loki/blob/main/docs/sources/operations/storage/wal.md#how-to-scale-updown for scaledown details
       scaleUp:
         policies:
-          - type: Pods
-            value: 1
-            periodSeconds: 900
+        - type: Pods
+          value: 1
+          periodSeconds: 900
       scaleDown:
         policies:
-          - type: Pods
-            value: 1
-            periodSeconds: 1800
+        - type: Pods
+          value: 1
+          periodSeconds: 1800
         stabilizationWindowSeconds: 3600
   image:
     # -- The Docker registry for the write image. Overrides `loki.image.registry`
@@ -1399,10 +1399,10 @@ write:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: write
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: write
+        topologyKey: kubernetes.io/hostname
   # -- DNS config for write pods
   dnsConfig: {}
   # -- Node selector for write pods
@@ -1451,17 +1451,17 @@ read:
     # -- Behavior policies while scaling.
     behavior: {}
     #  scaleUp:
-    #   stabilizationWindowSeconds: 300
-    #   policies:
-    #   - type: Pods
-    #     value: 1
-    #     periodSeconds: 60
-    #  scaleDown:
-    #   stabilizationWindowSeconds: 300
-    #   policies:
-    #   - type: Pods
-    #     value: 1
-    #     periodSeconds: 180
+  #   stabilizationWindowSeconds: 300
+  #   policies:
+  #   - type: Pods
+  #     value: 1
+  #     periodSeconds: 60
+  #  scaleDown:
+  #   stabilizationWindowSeconds: 300
+  #   policies:
+  #   - type: Pods
+  #     value: 1
+  #     periodSeconds: 180
   image:
     # -- The Docker registry for the read image. Overrides `loki.image.registry`
     registry: null
@@ -1513,10 +1513,10 @@ read:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: read
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: read
+        topologyKey: kubernetes.io/hostname
   # -- DNS config for read pods
   dnsConfig: {}
   # -- Node selector for read pods
@@ -1560,17 +1560,17 @@ backend:
     # -- Behavior policies while scaling.
     behavior: {}
     #    scaleUp:
-    #     stabilizationWindowSeconds: 300
-    #     policies:
-    #     - type: Pods
-    #       value: 1
-    #       periodSeconds: 60
-    #    scaleDown:
-    #     stabilizationWindowSeconds: 300
-    #     policies:
-    #     - type: Pods
-    #       value: 1
-    #       periodSeconds: 180
+  #     stabilizationWindowSeconds: 300
+  #     policies:
+  #     - type: Pods
+  #       value: 1
+  #       periodSeconds: 60
+  #    scaleDown:
+  #     stabilizationWindowSeconds: 300
+  #     policies:
+  #     - type: Pods
+  #       value: 1
+  #       periodSeconds: 180
   image:
     # -- The Docker registry for the backend image. Overrides `loki.image.registry`
     registry: null
@@ -1618,10 +1618,10 @@ backend:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: backend
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: backend
+        topologyKey: kubernetes.io/hostname
   # -- DNS config for backend pods
   dnsConfig: {}
   # -- Node selector for backend pods
@@ -1739,21 +1739,21 @@ ingester:
   # -- topologySpread for ingester pods.
   # @default -- Defaults to allow skew no more than 1 node
   topologySpreadConstraints:
-    - maxSkew: 1
-      topologyKey: kubernetes.io/hostname
-      whenUnsatisfiable: ScheduleAnyway
-      labelSelector:
-        matchLabels:
-          app.kubernetes.io/component: ingester
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/component: ingester
   # -- Affinity for ingester pods. Ignored if zoneAwareReplication is enabled.
   # @default -- Hard node anti-affinity
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: ingester
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: ingester
+        topologyKey: kubernetes.io/hostname
   # -- Pod Disruption Budget maxUnavailable
   maxUnavailable: 1
   # -- Node selector for ingester pods
@@ -1772,16 +1772,16 @@ ingester:
     # -- List of the ingester PVCs
     # @notationType -- list
     claims:
-      - name: data
-        size: 10Gi
-        #   -- Storage class to be used.
-        #   If defined, storageClassName: <storageClass>.
-        #   If set to "-", storageClassName: "", which disables dynamic provisioning.
-        #   If empty or set to null, no storageClassName spec is
-        #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
-        storageClass: null
-        # - name: wal
-        #   size: 150Gi
+    - name: data
+      size: 10Gi
+      #   -- Storage class to be used.
+      #   If defined, storageClassName: <storageClass>.
+      #   If set to "-", storageClassName: "", which disables dynamic provisioning.
+      #   If empty or set to null, no storageClassName spec is
+      #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
+      storageClass: null
+      # - name: wal
+    #   size: 150Gi
     # -- Enable StatefulSetAutoDeletePVC feature
     enableStatefulSetAutoDeletePVC: false
     whenDeleted: Retain
@@ -1910,10 +1910,10 @@ distributor:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: distributor
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: distributor
+        topologyKey: kubernetes.io/hostname
   # -- Pod Disruption Budget maxUnavailable
   maxUnavailable: null
   # -- Max Surge for distributor pods
@@ -2000,21 +2000,21 @@ querier:
   # -- topologySpread for querier pods.
   # @default -- Defaults to allow skew no more then 1 node
   topologySpreadConstraints:
-    - maxSkew: 1
-      topologyKey: kubernetes.io/hostname
-      whenUnsatisfiable: ScheduleAnyway
-      labelSelector:
-        matchLabels:
-          app.kubernetes.io/component: querier
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/component: querier
   # -- Affinity for querier pods.
   # @default -- Hard node anti-affinity
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: querier
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: querier
+        topologyKey: kubernetes.io/hostname
   # -- Pod Disruption Budget maxUnavailable
   maxUnavailable: null
   # -- Max Surge for querier pods
@@ -2116,10 +2116,10 @@ queryFrontend:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: query-frontend
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: query-frontend
+        topologyKey: kubernetes.io/hostname
   # -- Pod Disruption Budget maxUnavailable
   maxUnavailable: null
   # -- Node selector for query-frontend pods
@@ -2177,10 +2177,10 @@ queryScheduler:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: query-scheduler
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: query-scheduler
+        topologyKey: kubernetes.io/hostname
   # -- Pod Disruption Budget maxUnavailable
   maxUnavailable: 1
   # -- Node selector for query-scheduler pods
@@ -2239,10 +2239,10 @@ indexGateway:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: index-gateway
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: index-gateway
+        topologyKey: kubernetes.io/hostname
   # -- Pod Disruption Budget maxUnavailable
   maxUnavailable: null
   # -- Node selector for index-gateway pods
@@ -2300,10 +2300,10 @@ compactor:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: compactor
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: compactor
+        topologyKey: kubernetes.io/hostname
   # -- Labels for compactor service
   serviceLabels: {}
   # -- Additional CLI args for the compactor
@@ -2351,16 +2351,16 @@ compactor:
     # -- List of the compactor PVCs
     # @notationType -- list
     claims:
-      - name: data
-        size: 10Gi
-        #   -- Storage class to be used.
-        #   If defined, storageClassName: <storageClass>.
-        #   If set to "-", storageClassName: "", which disables dynamic provisioning.
-        #   If empty or set to null, no storageClassName spec is
-        #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
-        storageClass: null
-        # - name: wal
-        #   size: 150Gi
+    - name: data
+      size: 10Gi
+      #   -- Storage class to be used.
+      #   If defined, storageClassName: <storageClass>.
+      #   If set to "-", storageClassName: "", which disables dynamic provisioning.
+      #   If empty or set to null, no storageClassName spec is
+      #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
+      storageClass: null
+      # - name: wal
+    #   size: 150Gi
     # -- Enable StatefulSetAutoDeletePVC feature
     enableStatefulSetAutoDeletePVC: false
     whenDeleted: Retain
@@ -2406,10 +2406,10 @@ bloomGateway:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: bloom-gateway
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: bloom-gateway
+        topologyKey: kubernetes.io/hostname
   # -- Labels for bloom gateway service
   serviceLabels: {}
   # -- Additional CLI args for the bloom gateway
@@ -2457,16 +2457,16 @@ bloomGateway:
     # -- List of the bloom gateway PVCs
     # @notationType -- list
     claims:
-      - name: data
-        size: 10Gi
-        #   -- Storage class to be used.
-        #   If defined, storageClassName: <storageClass>.
-        #   If set to "-", storageClassName: "", which disables dynamic provisioning.
-        #   If empty or set to null, no storageClassName spec is
-        #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
-        storageClass: null
-        # - name: wal
-        #   size: 150Gi
+    - name: data
+      size: 10Gi
+      #   -- Storage class to be used.
+      #   If defined, storageClassName: <storageClass>.
+      #   If set to "-", storageClassName: "", which disables dynamic provisioning.
+      #   If empty or set to null, no storageClassName spec is
+      #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
+      storageClass: null
+      # - name: wal
+    #   size: 150Gi
     # -- Enable StatefulSetAutoDeletePVC feature
     enableStatefulSetAutoDeletePVC: false
     whenDeleted: Retain
@@ -2512,10 +2512,10 @@ bloomCompactor:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: bloom-compactor
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: bloom-compactor
+        topologyKey: kubernetes.io/hostname
   # -- Labels for bloom compactor service
   serviceLabels: {}
   # -- Additional CLI args for the bloom compactor
@@ -2563,16 +2563,16 @@ bloomCompactor:
     # -- List of the bloom compactor PVCs
     # @notationType -- list
     claims:
-      - name: data
-        size: 10Gi
-        #   -- Storage class to be used.
-        #   If defined, storageClassName: <storageClass>.
-        #   If set to "-", storageClassName: "", which disables dynamic provisioning.
-        #   If empty or set to null, no storageClassName spec is
-        #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
-        storageClass: null
-        # - name: wal
-        #   size: 150Gi
+    - name: data
+      size: 10Gi
+      #   -- Storage class to be used.
+      #   If defined, storageClassName: <storageClass>.
+      #   If set to "-", storageClassName: "", which disables dynamic provisioning.
+      #   If empty or set to null, no storageClassName spec is
+      #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
+      storageClass: null
+      # - name: wal
+    #   size: 150Gi
     # -- Enable StatefulSetAutoDeletePVC feature
     enableStatefulSetAutoDeletePVC: false
     whenDeleted: Retain
@@ -2618,10 +2618,10 @@ patternIngester:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: pattern-ingester
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: pattern-ingester
+        topologyKey: kubernetes.io/hostname
   # -- Labels for pattern ingester service
   serviceLabels: {}
   # -- Additional CLI args for the pattern ingester
@@ -2669,16 +2669,16 @@ patternIngester:
     # -- List of the pattern ingester PVCs
     # @notationType -- list
     claims:
-      - name: data
-        size: 10Gi
-        #   -- Storage class to be used.
-        #   If defined, storageClassName: <storageClass>.
-        #   If set to "-", storageClassName: "", which disables dynamic provisioning.
-        #   If empty or set to null, no storageClassName spec is
-        #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
-        storageClass: null
-        # - name: wal
-        #   size: 150Gi
+    - name: data
+      size: 10Gi
+      #   -- Storage class to be used.
+      #   If defined, storageClassName: <storageClass>.
+      #   If set to "-", storageClassName: "", which disables dynamic provisioning.
+      #   If empty or set to null, no storageClassName spec is
+      #   set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
+      storageClass: null
+      # - name: wal
+    #   size: 150Gi
     # -- Enable StatefulSetAutoDeletePVC feature
     enableStatefulSetAutoDeletePVC: false
     whenDeleted: Retain
@@ -2746,10 +2746,10 @@ ruler:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: ruler
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: ruler
+        topologyKey: kubernetes.io/hostname
   # -- Pod Disruption Budget maxUnavailable
   maxUnavailable: null
   # -- Node selector for ruler pods
@@ -2777,69 +2777,69 @@ ruler:
   # -- Directories containing rules files
   directories: {}
   # tenant_foo:
-  #   rules1.txt: |
-  #     groups:
-  #       - name: should_fire
-  #         rules:
-  #           - alert: HighPercentageError
-  #             expr: |
-  #               sum(rate({app="foo", env="production"} |= "error" [5m])) by (job)
-  #                 /
-  #               sum(rate({app="foo", env="production"}[5m])) by (job)
-  #                 > 0.05
-  #             for: 10m
-  #             labels:
-  #               severity: warning
-  #             annotations:
-  #               summary: High error rate
-  #       - name: credentials_leak
-  #         rules:
-  #           - alert: http-credentials-leaked
-  #             annotations:
-  #               message: "{{ $labels.job }} is leaking http basic auth credentials."
-  #             expr: 'sum by (cluster, job, pod) (count_over_time({namespace="prod"} |~ "http(s?)://(\\w+):(\\w+)@" [5m]) > 0)'
-  #             for: 10m
-  #             labels:
-  #               severity: critical
-  #   rules2.txt: |
-  #     groups:
-  #       - name: example
-  #         rules:
-  #         - alert: HighThroughputLogStreams
-  #           expr: sum by(container) (rate({job=~"loki-dev/.*"}[1m])) > 1000
-  #           for: 2m
-  # tenant_bar:
-  #   rules1.txt: |
-  #     groups:
-  #       - name: should_fire
-  #         rules:
-  #           - alert: HighPercentageError
-  #             expr: |
-  #               sum(rate({app="foo", env="production"} |= "error" [5m])) by (job)
-  #                 /
-  #               sum(rate({app="foo", env="production"}[5m])) by (job)
-  #                 > 0.05
-  #             for: 10m
-  #             labels:
-  #               severity: warning
-  #             annotations:
-  #               summary: High error rate
-  #       - name: credentials_leak
-  #         rules:
-  #           - alert: http-credentials-leaked
-  #             annotations:
-  #               message: "{{ $labels.job }} is leaking http basic auth credentials."
-  #             expr: 'sum by (cluster, job, pod) (count_over_time({namespace="prod"} |~ "http(s?)://(\\w+):(\\w+)@" [5m]) > 0)'
-  #             for: 10m
-  #             labels:
-  #               severity: critical
-  #   rules2.txt: |
-  #     groups:
-  #       - name: example
-  #         rules:
-  #         - alert: HighThroughputLogStreams
-  #           expr: sum by(container) (rate({job=~"loki-dev/.*"}[1m])) > 1000
-  #           for: 2m
+#   rules1.txt: |
+#     groups:
+#       - name: should_fire
+#         rules:
+#           - alert: HighPercentageError
+#             expr: |
+#               sum(rate({app="foo", env="production"} |= "error" [5m])) by (job)
+#                 /
+#               sum(rate({app="foo", env="production"}[5m])) by (job)
+#                 > 0.05
+#             for: 10m
+#             labels:
+#               severity: warning
+#             annotations:
+#               summary: High error rate
+#       - name: credentials_leak
+#         rules:
+#           - alert: http-credentials-leaked
+#             annotations:
+#               message: "{{ $labels.job }} is leaking http basic auth credentials."
+#             expr: 'sum by (cluster, job, pod) (count_over_time({namespace="prod"} |~ "http(s?)://(\\w+):(\\w+)@" [5m]) > 0)'
+#             for: 10m
+#             labels:
+#               severity: critical
+#   rules2.txt: |
+#     groups:
+#       - name: example
+#         rules:
+#         - alert: HighThroughputLogStreams
+#           expr: sum by(container) (rate({job=~"loki-dev/.*"}[1m])) > 1000
+#           for: 2m
+# tenant_bar:
+#   rules1.txt: |
+#     groups:
+#       - name: should_fire
+#         rules:
+#           - alert: HighPercentageError
+#             expr: |
+#               sum(rate({app="foo", env="production"} |= "error" [5m])) by (job)
+#                 /
+#               sum(rate({app="foo", env="production"}[5m])) by (job)
+#                 > 0.05
+#             for: 10m
+#             labels:
+#               severity: warning
+#             annotations:
+#               summary: High error rate
+#       - name: credentials_leak
+#         rules:
+#           - alert: http-credentials-leaked
+#             annotations:
+#               message: "{{ $labels.job }} is leaking http basic auth credentials."
+#             expr: 'sum by (cluster, job, pod) (count_over_time({namespace="prod"} |~ "http(s?)://(\\w+):(\\w+)@" [5m]) > 0)'
+#             for: 10m
+#             labels:
+#               severity: critical
+#   rules2.txt: |
+#     groups:
+#       - name: example
+#         rules:
+#         - alert: HighThroughputLogStreams
+#           expr: sum by(container) (rate({job=~"loki-dev/.*"}[1m])) > 1000
+#           for: 2m
 memcached:
   image:
     # -- Memcached Docker image repository
@@ -3096,15 +3096,15 @@ minio:
   rootUser: enterprise-logs
   rootPassword: supersecret
   buckets:
-    - name: chunks
-      policy: none
-      purge: false
-    - name: ruler
-      policy: none
-      purge: false
-    - name: admin
-      policy: none
-      purge: false
+  - name: chunks
+    policy: none
+    purge: false
+  - name: ruler
+    policy: none
+    purge: false
+  - name: admin
+    policy: none
+    purge: false
   persistence:
     size: 5Gi
     annotations: {}
@@ -3249,13 +3249,13 @@ monitoring:
     # -- Additional groups to add to the rules file
     additionalGroups: []
     # - name: additional-loki-rules
-    #   rules:
-    #     - record: job:loki_request_duration_seconds_bucket:sum_rate
-    #       expr: sum(rate(loki_request_duration_seconds_bucket[1m])) by (le, job)
-    #     - record: job_route:loki_request_duration_seconds_bucket:sum_rate
-    #       expr: sum(rate(loki_request_duration_seconds_bucket[1m])) by (le, job, route)
-    #     - record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
-    #       expr: sum(rate(container_cpu_usage_seconds_total[1m])) by (node, namespace, pod, container)
+  #   rules:
+  #     - record: job:loki_request_duration_seconds_bucket:sum_rate
+  #       expr: sum(rate(loki_request_duration_seconds_bucket[1m])) by (le, job)
+  #     - record: job_route:loki_request_duration_seconds_bucket:sum_rate
+  #       expr: sum(rate(loki_request_duration_seconds_bucket[1m])) by (le, job, route)
+  #     - record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate
+  #       expr: sum(rate(container_cpu_usage_seconds_total[1m])) by (node, namespace, pod, container)
   # ServiceMonitor configuration
   serviceMonitor:
     # -- If enabled, ServiceMonitor resources for Prometheus Operator are created
@@ -3402,10 +3402,10 @@ tableManager:
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/component: table-manager
-          topologyKey: kubernetes.io/hostname
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: table-manager
+        topologyKey: kubernetes.io/hostname
   # -- DNS config table-manager pods
   dnsConfig: {}
   # -- Node selector for table-manager pods

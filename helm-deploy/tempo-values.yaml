@@ -37,9 +37,9 @@ tempo:
   #    memory: 6Gi
 
   memBallastSizeMbs: 1024
-  multitenancyEnabled: false
+  multitenancyEnabled: true
   # -- If true, Tempo will report anonymous usage data about the shape of a deployment to Grafana Labs
-  reportingEnabled: true
+  reportingEnabled: false
   metricsGenerator:
     # -- If true, enables Tempo's metrics generator (https://grafana.com/docs/tempo/next/metrics-generator/)
     enabled: false
@@ -101,11 +101,11 @@ tempo:
         http:
           endpoint: "0.0.0.0:4318"
   securityContext: {}
-    # allowPrivilegeEscalation: false
-    #  capabilities:
-    #    drop:
-    #    - ALL
-    # readOnlyRootFilesystem: true
+  # allowPrivilegeEscalation: false
+  #  capabilities:
+  #    drop:
+  #    - ALL
+  # readOnlyRootFilesystem: true
   ## Additional container arguments
   extraArgs: {}
   # -- Environment variables to add
@@ -115,44 +115,44 @@ tempo:
   # -- Volume mounts to add
   extraVolumeMounts: []
   # - name: extra-volume
-  #   mountPath: /mnt/volume
-  #   readOnly: true
-  #   existingClaim: volume-claim
+#   mountPath: /mnt/volume
+#   readOnly: true
+#   existingClaim: volume-claim
 
 # -- Tempo configuration file contents
 # @default -- Dynamically generated tempo configmap
 config: |
-    multitenancy_enabled: {{ .Values.tempo.multitenancyEnabled }}
-    usage_report:
-      reporting_enabled: {{ .Values.tempo.reportingEnabled }}
-    compactor:
-      compaction:
-        block_retention: {{ .Values.tempo.retention }}
-    distributor:
-      receivers:
-        {{- toYaml .Values.tempo.receivers | nindent 8 }}
-    ingester:
-      {{- toYaml .Values.tempo.ingester | nindent 6 }}
-    server:
-      {{- toYaml .Values.tempo.server | nindent 6 }}
-    storage:
-      {{- toYaml .Values.tempo.storage | nindent 6 }}
-    querier:
-      {{- toYaml .Values.tempo.querier | nindent 6 }}
-    query_frontend:
-      {{- toYaml .Values.tempo.queryFrontend | nindent 6 }}
-    overrides:
-      {{- toYaml .Values.tempo.global_overrides | nindent 6 }}
-      {{- if .Values.tempo.metricsGenerator.enabled }}
-          metrics_generator_processors:
-          - 'service-graphs'
-          - 'span-metrics'
-    metrics_generator:
-          storage:
-            path: "/tmp/tempo"
-            remote_write:
-              - url: {{ .Values.tempo.metricsGenerator.remoteWriteUrl }}
-      {{- end }}
+  multitenancy_enabled: {{ .Values.tempo.multitenancyEnabled }}
+  usage_report:
+    reporting_enabled: {{ .Values.tempo.reportingEnabled }}
+  compactor:
+    compaction:
+      block_retention: {{ .Values.tempo.retention }}
+  distributor:
+    receivers:
+      {{- toYaml .Values.tempo.receivers | nindent 8 }}
+  ingester:
+    {{- toYaml .Values.tempo.ingester | nindent 6 }}
+  server:
+    {{- toYaml .Values.tempo.server | nindent 6 }}
+  storage:
+    {{- toYaml .Values.tempo.storage | nindent 6 }}
+  querier:
+    {{- toYaml .Values.tempo.querier | nindent 6 }}
+  query_frontend:
+    {{- toYaml .Values.tempo.queryFrontend | nindent 6 }}
+  overrides:
+    {{- toYaml .Values.tempo.global_overrides | nindent 6 }}
+    {{- if .Values.tempo.metricsGenerator.enabled }}
+        metrics_generator_processors:
+        - 'service-graphs'
+        - 'span-metrics'
+  metrics_generator:
+        storage:
+          path: "/tmp/tempo"
+          remote_write:
+            - url: {{ .Values.tempo.metricsGenerator.remoteWriteUrl }}
+    {{- end }}
 
 tempoQuery:
   repository: grafana/tempo-query
@@ -187,7 +187,7 @@ tempoQuery:
     pathType: Prefix
 
     hosts:
-      - query.tempo.example.com
+    - query.tempo.example.com
     ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
     extraPaths: []
     # - path: /*
@@ -206,8 +206,8 @@ tempoQuery:
 
     tls: []
     #  - secretName: tempo-query-tls
-    #    hosts:
-    #      - query.tempo.example.com
+  #    hosts:
+  #      - query.tempo.example.com
 
   resources: {}
   #  requests:
@@ -228,18 +228,18 @@ tempoQuery:
   #   readOnly: true
   #   existingClaim: volume-claim
   securityContext: {}
-    # allowPrivilegeEscalation: false
-    #  capabilities:
-    #    drop:
-    #    - ALL
-    # readOnlyRootFilesystem: false # fails if true, do not enable
+  # allowPrivilegeEscalation: false
+#  capabilities:
+#    drop:
+#    - ALL
+# readOnlyRootFilesystem: false # fails if true, do not enable
 
 # -- securityContext for container
 securityContext: {}
-  # runAsUser: 65532
-  # runAsGroup: 65532
-  # fsGroup: 65532
-  # runAsNonRoot: true
+# runAsUser: 65532
+# runAsGroup: 65532
+# fsGroup: 65532
+# runAsNonRoot: true
 
 serviceAccount:
   # -- Specifies whether a ServiceAccount should be created
@@ -272,7 +272,7 @@ persistence:
   enabled: false
   # storageClassName: local-path
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   size: 10Gi
 
 # -- Pod Annotations
@@ -348,9 +348,9 @@ networkPolicy:
     ## @param networkPolicy.egress.to Allow egress traffic to specific destinations
     to: []
     ## Add destinations to the egress by specifying - ipBlock: <CIDR>
-    ## E.X.
-    ## to:
-    ##  - namespaceSelector:
-    ##    matchExpressions:
-  ##    - {key: role, operator: In, values: [tempo]}
+  ## E.X.
+  ## to:
+  ##  - namespaceSelector:
+  ##    matchExpressions:
+##    - {key: role, operator: In, values: [tempo]}
 
