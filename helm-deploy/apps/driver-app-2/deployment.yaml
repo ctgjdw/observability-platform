@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: driver-app-2
+spec:
+  selector:
+    matchLabels:
+      app: driver-app-2
+  template:
+    metadata:
+      labels:
+        app: driver-app-2
+    spec:
+      containers:
+        - name: driver-app-2
+          image: driver-app-2:1.0.0
+          envFrom:
+            - configMapRef:
+                name: driver-app-2
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 5000
