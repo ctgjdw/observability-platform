@@ -1,0 +1,24 @@
+mode: standalone
+rootUser: monitoring
+buckets:
+  - name: loki-chunks
+    policy: none
+    purge: false
+  - name: loki-ruler
+    policy: none
+    purge: false
+  - name: loki-admin
+    policy: none
+    purge: false
+persistence:
+  size: 5Gi
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+rootPassword: password!
+# Changed the mc config path to '/tmp' from '/etc' as '/etc' is only writable by root and OpenShift will not permit this.
+configPathmc: "/tmp/minio/mc/"
+ingress:
+  enabled: true
+  ingressClassName: nginx
