@@ -54,15 +54,15 @@ services:
         container_name: driver-app-2-fastapi
         labels:
             logger: vector
-            service_namespace: 'nautilus'
+            service_namespace: 'common_services'
             service_name: 'driver-app-2-fastapi'
         environment:
             - OTEL_SERVICE_NAME=driver-app-2-fastapi
-            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=nautilus
+            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=common_services
             - OTEL_SERVICE_VERSION=1.0.0
             - OTEL_TRACES_EXPORTER=otlp
             - OTEL_METRICS_EXPORTER=otlp
-            - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy-nautilus:4318
+            - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy-common-services:4318
             - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
             - OTEL_PYTHON_LOG_CORRELATION=true
             - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
@@ -124,6 +124,13 @@ services:
             - 3000:3000
         networks:
             - host-net
+
+    pyroscope:
+        image: grafana/pyroscope
+        networks:
+            - host-net
+        ports:
+            - 4040:4040
 
     loki:
         image: grafana/loki:main
@@ -231,6 +238,22 @@ services:
         image: grafana/alloy:latest
         volumes:
             - ./metrics-scraper-config.alloy:/etc/alloy/config.alloy
+        command:
+            - run
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --storage.path=/var/lib/alloy/data
+            - /etc/alloy/config.alloy
+        networks:
+            - host-net
+        environment:
+            - OTEL_SERVICE_NAMESPACE=nautilus
+
+    alloy-profile-scraper:
+        image: grafana/alloy:latest
+        privileged: true
+        volumes:
+            - ./profile-scraper-config.alloy:/etc/alloy/config.alloy
+            - /var/run/docker.sock:/var/run/docker.sock
         command:
             - run
             - --server.http.listen-addr=0.0.0.0:12345

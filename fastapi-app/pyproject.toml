@@ -12,6 +12,7 @@ aiohttp = "^3.9.5"
 opentelemetry-distro = "^0.46b0"
 opentelemetry-exporter-otlp = "^1.25.0"
 opentelemetry-instrumentation-fastapi = "^0.46b0"
+pyroscope-io = "^0.8.7"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"

@@ -3,6 +3,9 @@ auth_enabled: true
 server:
   http_listen_port: 3100
 
+limits_config:
+  max_streams_per_user: 1000000
+
 common:
   instance_addr: 127.0.0.1
   path_prefix: /tmp/loki

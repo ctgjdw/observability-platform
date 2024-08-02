@@ -1,13 +1,18 @@
 from contextlib import asynccontextmanager
 import logging
 import sys
+import math
+from concurrent.futures import ProcessPoolExecutor
 
 import uvicorn.config
 import uvicorn.logging
 from fastapi import FastAPI, HTTPException
+import pyroscope
 
 from src.service.user_service import loginUser
 
+
+pyroscope.configure(application_name="driver-app-2-fastapi", server_address="http://pyroscope:4040")
 
 @asynccontextmanager
 async def configure_loggers(app: FastAPI):
@@ -39,6 +44,15 @@ async def configure_loggers(app: FastAPI):
 
 app = FastAPI(lifespan=configure_loggers)
 
+def task(arg):
+    return sum([math.sqrt(i) for i in range(1,arg)])
+
+@app.get("/test")
+async def test():
+    logging.info("Start")
+    with ProcessPoolExecutor(8) as exe:
+        results = exe.map(task, range(1,50000))
+        logging.info("Done")
 
 @app.get("/api/v1/user")
 async def getUser(name: str, email: str, password: str):
