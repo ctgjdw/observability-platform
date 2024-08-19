@@ -14,6 +14,14 @@ prometheus.scrape "grafana" {
   forward_to = [prometheus.remote_write.mimir.receiver]
 }
 
+prometheus.scrape "docker" {
+  targets = [
+    {"__address__" = "cadvisor:8080"},
+  ]
+
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
 prometheus.scrape "opensearch" {
   targets = [
     {"__address__" = "opensearch:9200"},

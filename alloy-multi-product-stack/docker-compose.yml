@@ -247,6 +247,8 @@ services:
             - host-net
         environment:
             - OTEL_SERVICE_NAMESPACE=nautilus
+        ports:
+            - 12345:12345
 
     alloy-profile-scraper:
         image: grafana/alloy:latest
@@ -280,6 +282,27 @@ services:
         networks:
             - host-net
         command: ['run', '--out', 'experimental-prometheus-rw', '/test/k6.js']
+
+    cadvisor:
+        image: gcr.io/cadvisor/cadvisor:v0.49.1
+        command:
+            - -logtostderr
+            - -docker_only
+            - -enable_metrics
+            - cpu,memory,network,process
+        volumes:
+            - /dev/disk/:/dev/disk:ro
+            - /var/lib/docker/:/var/lib/docker:ro
+            - /sys:/sys:ro
+            - /var/run:/var/run:ro
+            - /:/rootfs:ro
+        ports:
+            - 8080:8080
+        privileged: true
+        devices:
+            - /dev/kmsg
+        networks:
+            - host-net
 
 networks:
     host-net:
