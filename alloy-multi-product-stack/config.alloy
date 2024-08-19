@@ -118,3 +118,52 @@ prometheus.remote_write "prom" {
 	}
   }
 }
+
+// Frontend
+
+faro.receiver "integrations_app_agent_receiver" {
+    server {
+        listen_address           = "0.0.0.0"
+        listen_port              = 12346
+        cors_allowed_origins     = ["http://localhost:3001"]
+        max_allowed_payload_size = "10MiB"
+
+        rate_limiting {
+            rate = 100
+        }
+    }
+
+    sourcemaps { }
+
+    output {
+        logs   = [loki.process.logs_process_client.receiver]
+        traces = [otelcol.exporter.otlphttp.default.input]
+    }
+}
+
+loki.process "logs_process_client" {
+    forward_to = [loki.write.namespaced.receiver]
+
+    stage.logfmt {
+        mapping = { "kind" = "", "app_name" = "", "app_environment" = "" }
+    }
+
+    stage.labels {
+        values = { "kind" = "kind", "service_name" = "app_name", "Application" = "app_name", "Environment" = "app_environment" }
+    }
+
+	stage.static_labels {
+		values = {
+			Namespace = env("OTEL_SERVICE_NAMESPACE"),
+		}
+	}
+}
+
+loki.write "namespaced" {
+    endpoint {
+        url = "http://loki:3100/loki/api/v1/push"
+		headers = {
+		"X-Scope-OrgID" = env("OTEL_SERVICE_NAMESPACE"),
+		}
+    }
+}
