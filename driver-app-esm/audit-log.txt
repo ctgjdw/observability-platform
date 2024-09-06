@@ -1,0 +1,23 @@
+'ResourceLog #0
+Resource SchemaURL:
+Resource attributes:
+-> service.name: Str(driver-app-2)
+-> telemetry.sdk.language: Str(nodejs)
+-> telemetry.sdk.name: Str(opentelemetry)
+-> telemetry.sdk.version: Str(1.24.1)
+-> service.namespace: Str(common_services)
+ScopeLogs #0
+ScopeLogs SchemaURL:
+InstrumentationScope audit 1.0.0
+LogRecord #0
+ObservedTimestamp: 2024-09-06 03:55:02.639 +0000 UTC
+Timestamp: 2024-09-06 03:55:02.639 +0000 UTC
+SeverityText: info
+SeverityNumber: Info(9)
+Body: Map({"action":{"description":"Get User by name, email, password","method":"GET","resource":"/api/v1/user"},"user":{"email":"test@test.com","name":"test"}})
+Attributes:
+-> log.type: Str(audit)
+Trace ID: 084f66208eb56fdb7ea0e1f02002b7a0
+Span ID: 73547db26b53412f
+Flags: 1
+'

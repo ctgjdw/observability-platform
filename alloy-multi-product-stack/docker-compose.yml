@@ -24,7 +24,7 @@ services:
 
     driver-app-2:
         build:
-            context: ../driver-app-2
+            context: ../driver-app-esm
             dockerfile: Dockerfile
         image: driver-app-2:1.0.0
         container_name: driver-app-2
@@ -38,6 +38,7 @@ services:
             - OTEL_SERVICE_VERSION=1.0.0
             - OTEL_RESOURCE_ATTRIBUTES=service.namespace=common_services
             - OTEL_TRACES_EXPORTER=otlp
+            - OTEL_LOGS_EXPORTER=otlp
             - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy-common-services:4318
             - OTEL_NODE_RESOURCE_DETECTORS=all
             - API_URL=http://driver-app-1:5055
@@ -96,11 +97,12 @@ services:
         ports:
             - 12346:12346
         volumes:
-            - ./config.alloy:/etc/alloy/config.alloy
+            - ./config-audit.alloy:/etc/alloy/config.alloy
         command:
             - run
-            - --server.http.listen-addr=0.0.0.0:12345
+            - --server.http.listen-addr=0.0.0.0:12346
             - --storage.path=/var/lib/alloy/data
+            - --stability.level=experimental
             - /etc/alloy/config.alloy
         networks:
             - host-net
@@ -190,12 +192,12 @@ services:
             tenant_id: 'admin'
         networks:
             - host-net
-        command:
-            - /bin/bash
-            - -c
-            - |
-                ./bin/opensearch-plugin install https://github.com/Aiven-Open/prometheus-exporter-plugin-for-opensearch/releases/download/2.8.0.0/prometheus-exporter-2.8.0.0.zip &&
-                /usr/share/opensearch/opensearch-docker-entrypoint.sh opensearch
+        # command:
+        #     - /bin/bash
+        #     - -c
+        #     - |
+        #         ./bin/opensearch-plugin install https://github.com/Aiven-Open/prometheus-exporter-plugin-for-opensearch/releases/download/2.8.0.0/prometheus-exporter-2.8.0.0.zip &&
+        #         /usr/share/opensearch/opensearch-docker-entrypoint.sh opensearch
 
     opensearch-dashboards:
         image: opensearchproject/opensearch-dashboards:2.8.0
