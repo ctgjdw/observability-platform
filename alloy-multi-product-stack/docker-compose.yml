@@ -28,7 +28,7 @@ services:
 
     driver-app-2:
         build:
-            context: ../driver-app-esm
+            context: ../driver-app-2
             dockerfile: Dockerfile
         image: driver-app-2:1.0.0
         container_name: driver-app-2
