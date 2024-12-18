@@ -51,13 +51,10 @@ sinks:
       codec: text
     tenant_id: "{{ .service_namespace }}"
     labels:
-      container_created_at: "{{ .container_created_at }}"
       container_id: "{{ .container_id }}"
       container_name: "{{ .container_name }}"
       host: "{{ .host }}"
       image: "{{ .image }}"
-      stream: "{{ .stream }}"
-      timestamp: "{{ .timestamp }}"
       service_name: "{{ .service_name }}"
       service_namespace: "{{ .service_namespace }}"
       logger: vector

@@ -118,7 +118,7 @@ services:
             - OTEL_SERVICE_NAMESPACE=common_services
 
     grafana:
-        image: grafana/grafana-enterprise:latest
+        image: grafana/grafana:latest
         labels:
             logging: 'promtail_sys'
             tenant_id: 'admin'
