@@ -18,7 +18,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 8,
+    "id": 6,
     "links": [],
     "panels": [
         {
@@ -33,6 +33,7 @@
                         "fixedColor": "green",
                         "mode": "fixed"
                     },
+                    "decimals": 0,
                     "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
@@ -77,7 +78,7 @@
                         "uid": "prom1"
                     },
                     "editorMode": "code",
-                    "expr": "sum(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route=~\"$route\"}) by(service_name)",
+                    "expr": "sum(increase(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route=~\"$route\"}[$__range]))",
                     "instant": true,
                     "legendFormat": "{{label_name}}",
                     "range": true,
@@ -114,6 +115,7 @@
                     "color": {
                         "mode": "thresholds"
                     },
+                    "decimals": 0,
                     "mappings": [],
                     "thresholds": {
                         "mode": "absolute",
@@ -159,7 +161,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_status_code=~\"^2.*\", http_route=~\"$route\"}) by(http_status_code)",
+                    "expr": "sum(increase(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_status_code=~\"^2.*\", http_route=~\"$route\"}[$__range]))",
                     "format": "time_series",
                     "instant": true,
                     "legendFormat": "Http Status 2XX",
@@ -173,7 +175,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_status_code=~\"^3.*\", http_route=~\"$route\"}) by(http_status_code)",
+                    "expr": "sum(increase(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_status_code=~\"^3.*\", http_route=~\"$route\"}[$__range]))",
                     "format": "time_series",
                     "hide": false,
                     "instant": true,
@@ -188,7 +190,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_status_code=~\"^4.*\", http_route=~\"$route\"}) by(http_status_code)",
+                    "expr": "sum(increase(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_status_code=~\"^4.*\", http_route=~\"$route\"}[$__range]))",
                     "format": "time_series",
                     "hide": false,
                     "instant": true,
@@ -203,7 +205,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_status_code=~\"^5.*\", http_route=~\"$route\"}) by(http_status_code)",
+                    "expr": "sum(increase(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_status_code=~\"^5.*\", http_route=~\"$route\"}[$__range]))",
                     "format": "time_series",
                     "hide": false,
                     "instant": true,
@@ -256,10 +258,34 @@
                             "viz": false
                         }
                     },
+                    "decimals": 0,
                     "mappings": [],
                     "unit": "short"
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "__systemRef": "hideSeriesFrom",
+                        "matcher": {
+                            "id": "byNames",
+                            "options": {
+                                "mode": "exclude",
+                                "names": [],
+                                "prefix": "All except:",
+                                "readOnly": true
+                            }
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.hideFrom",
+                                "value": {
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": true
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
             "gridPos": {
                 "h": 8,
@@ -295,7 +321,7 @@
                         "uid": "prom1"
                     },
                     "editorMode": "code",
-                    "expr": "sum(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route=~\"$route\"}) by(span_name)",
+                    "expr": "sum(increase(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route!~\".*/health\", http_route=~\"$route\"}[$__range])) by (span_name)",
                     "instant": false,
                     "legendFormat": "{{label_name}}",
                     "range": true,
@@ -323,6 +349,7 @@
                             "viz": false
                         }
                     },
+                    "decimals": 0,
                     "mappings": [],
                     "unit": "ms"
                 },
@@ -363,7 +390,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(duration_milliseconds_sum{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route=~\"$route\"}) by(span_name)",
+                    "expr": "sum(increase(duration_milliseconds_sum{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\",http_route!~\"^/health\", http_route=~\"$route\"}[$__range])) by(span_name)",
                     "instant": true,
                     "legendFormat": "{{label_name}}",
                     "range": false,
@@ -426,7 +453,7 @@
                         "uid": "prom1"
                     },
                     "editorMode": "code",
-                    "expr": "sum(rate(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route=~\"$route\"}[3m])*60)",
+                    "expr": "sum(rate(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route!~\"^/health$\", http_route=~\"$route\"}[3m])*60)",
                     "hide": false,
                     "instant": false,
                     "range": true,
@@ -441,7 +468,7 @@
                 "type": "prometheus",
                 "uid": "prom1"
             },
-            "description": "percentage of HTTP status 5xx in all requests",
+            "description": "percentage of HTTP status 5xx/4xx in all requests",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -493,7 +520,7 @@
                         "uid": "prom1"
                     },
                     "editorMode": "code",
-                    "expr": "sum(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_status_code=~\"5.*|\", http_route=~\"$route\"})/sum(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route=~\"$route\"})",
+                    "expr": "sum(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_status_code=~\"(5.*|4.*)\", http_route!~\"^/health$\", http_route=~\"$route\"})/sum(duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route=~\"$route\", http_route!~\"^/health$\"})",
                     "instant": false,
                     "range": true,
                     "refId": "A"
@@ -507,7 +534,7 @@
                 "type": "prometheus",
                 "uid": "prom1"
             },
-            "description": "request rate per minute over last 3 minutes",
+            "description": "request rate per minute over last 2 minutes",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -591,7 +618,7 @@
                         "uid": "prom1"
                     },
                     "editorMode": "code",
-                    "expr": "sum(rate(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_route=~\"$route\"}[3m])*60)  by(span_name)",
+                    "expr": "sum(rate(duration_milliseconds_count{service_name=\"$app\", span_kind=\"SPAN_KIND_SERVER\", http_route!~\"^/health\", http_route=~\"$route\"}[2m]) * 60) by (span_name)",
                     "hide": false,
                     "instant": false,
                     "legendFormat": "{{label_name}}",
@@ -607,7 +634,7 @@
                 "type": "prometheus",
                 "uid": "prom1"
             },
-            "description": "PR95 latency over last 3 minutes",
+            "description": "PR95 latency over last 2 minutes",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -691,7 +718,7 @@
                         "uid": "prom1"
                     },
                     "editorMode": "code",
-                    "expr": "histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_route=~\"$route\"}[3m])) by (le, span_name))",
+                    "expr": "histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\",http_route!~\"^/health$\", http_route=~\"$route\"}[2m])) by (le, span_name))",
                     "instant": false,
                     "legendFormat": "{{label_name}}",
                     "range": true,
@@ -768,7 +795,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sort_desc(duration_milliseconds_sum{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_status_code!=\"\", http_route=~\"$route\"} / duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_status_code!=\"\", http_route=~\"$route\"})",
+                    "expr": "sort_desc(duration_milliseconds_sum{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_status_code!=\"\", http_route!~\"^/health$\", http_route=~\"$route\"} / duration_milliseconds_count{span_kind=\"SPAN_KIND_SERVER\", service_name=\"$app\", http_status_code!=\"\", http_route!~\"^/health$\", http_route=~\"$route\"})",
                     "instant": true,
                     "legendFormat": "[{{http_status_code}}] {{span_name}}",
                     "range": false,
@@ -844,7 +871,8 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green"
+                                "color": "green",
+                                "value": null
                             },
                             {
                                 "color": "red",
@@ -988,7 +1016,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(rate(duration_milliseconds_count{service_name=\"$app\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}[3m])*60) by(service_name, http_method, http_route)",
+                    "expr": "sum(rate(duration_milliseconds_count{service_name=\"$app\", http_route!~\"^/health$\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}[2m])*60) by(service_name, http_method, http_route)",
                     "format": "time_series",
                     "hide": false,
                     "instant": false,
@@ -1002,7 +1030,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(rate(duration_milliseconds_count{service_name=\"$app\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}[3m])*60) by(service_name, http_method, http_route)",
+                    "expr": "sum(rate(duration_milliseconds_count{service_name=\"$app\", http_route!~\"^/health$\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}[2m])*60) by(service_name, http_method, http_route)",
                     "format": "table",
                     "hide": false,
                     "instant": true,
@@ -1015,7 +1043,7 @@
                         "uid": "prom1"
                     },
                     "editorMode": "code",
-                    "expr": "histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{service_name=\"$app\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}[3m])) by (le, service_name, http_method, http_route))",
+                    "expr": "histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{service_name=\"$app\", http_route=~\"$route\", http_route!~\"^/health$\", span_kind=\"SPAN_KIND_SERVER\"}[2m])) by (le, service_name, http_method, http_route))",
                     "hide": false,
                     "instant": false,
                     "range": true,
@@ -1028,7 +1056,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{service_name=\"$app\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}[3m])) by (le, service_name, http_method, http_route))",
+                    "expr": "histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{service_name=\"$app\", http_route=~\"$route\", http_route!~\"^/health$\", span_kind=\"SPAN_KIND_SERVER\"}[2m])) by (le, service_name, http_method, http_route))",
                     "format": "table",
                     "hide": false,
                     "instant": true,
@@ -1042,7 +1070,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(duration_milliseconds_count{service_name=\"$app\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\", http_status_code!~\"2.*|3.*\"}) by(service_name, http_method, http_route) / sum(duration_milliseconds_count{service_name=\"$app\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}) by(service_name, http_method, http_route)",
+                    "expr": "sum(duration_milliseconds_count{service_name=\"$app\", http_route!~\"^/health$\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\", http_status_code!~\"2.*|3.*\"}) by(service_name, http_method, http_route) / sum(duration_milliseconds_count{service_name=\"$app\", http_route!~\"^/health$\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}) by(service_name, http_method, http_route)",
                     "format": "time_series",
                     "hide": false,
                     "instant": false,
@@ -1056,7 +1084,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "sum(duration_milliseconds_count{service_name=\"$app\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\", http_status_code!~\"2.*|3.*\"}) by(service_name, http_method, http_route) / sum(duration_milliseconds_count{service_name=\"$app\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\"}) by(service_name, http_method, http_route)",
+                    "expr": "sum(duration_milliseconds_count{service_name=\"$app\", http_route!~\"^/health$\", http_route=~\"$route\", span_kind=\"SPAN_KIND_SERVER\", http_status_code!~\"2.*|3.*\"}) by(service_name, http_method, http_route) / sum(duration_milliseconds_count{service_name=\"$app\", http_route=~\"$route\", http_route!~\"^/health$\", span_kind=\"SPAN_KIND_SERVER\"}) by(service_name, http_method, http_route)",
                     "format": "table",
                     "hide": false,
                     "instant": true,
@@ -1144,7 +1172,7 @@
             },
             {
                 "current": {
-                    "text": ["All"],
+                    "text": "All",
                     "value": ["$__all"]
                 },
                 "datasource": {
@@ -1168,13 +1196,13 @@
         ]
     },
     "time": {
-        "from": "now-1h",
+        "from": "now-24h",
         "to": "now"
     },
     "timepicker": {},
     "timezone": "",
     "title": "Application Performance Monitoring",
     "uid": "a6sd8f768",
-    "version": 1,
+    "version": 3,
     "weekStart": ""
 }
