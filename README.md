@@ -12,7 +12,7 @@ The platform implements the `Grafana LGTM` stack and consists of the following a
 -   `node-exporter` - exposes node metrics for prom to scrape
 -   `cadvisor` - exposes container metrics for prom to scrape
 
-> Some components of this stack may not work on Docker Desktop - Mac (Vector/cadvisor)
+> Some components of this stack may not work on Docker Desktop - Mac (cadvisor)
 
 ![Observability Platform](doc/architecture.drawio.png)
 
