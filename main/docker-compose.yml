@@ -243,7 +243,7 @@ services:
         image: timberio/vector:nightly-2024-02-14-alpine
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
-            - ./vector.yml:/etc/vector/vector.yml
+            - ./vector.yaml:/etc/vector/vector.yaml
         networks:
             - host-net
 
