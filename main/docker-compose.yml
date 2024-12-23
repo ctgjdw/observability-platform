@@ -1,0 +1,318 @@
+version: '3.7'
+
+services:
+    db-app:
+        image: db-app:1.0.0
+        build:
+            context: ../db-app
+            dockerfile: Dockerfile
+        container_name: db-app
+        labels:
+            service_namespace: common_services
+            service_name: db-app
+            logger: vector
+        environment:
+            - SERVER_PORT=5055
+            - OTEL_COLLECTOR_HOST=http://alloy-common-services:4318
+            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=common_services
+            - OTEL_SERVICE_NAME=db-app
+            - OTEL_SERVICE_VERSION=1.0.0
+        ports:
+            - 5055:5055
+        networks:
+            - host-net
+        healthcheck:
+            test: curl -f http://localhost:5055/health || exit 1
+            timeout: 15s
+            retries: 3
+        depends_on:
+            opensearch:
+                condition: service_healthy
+
+    express-app:
+        build:
+            context: ../express-app
+            dockerfile: Dockerfile
+        image: express-app:1.0.0
+        container_name: express-app
+        labels:
+            logger: vector
+            service_namespace: common_services
+            service_name: express-app
+        environment:
+            - SERVER_PORT=5001
+            - OTEL_SERVICE_NAME=express-app
+            - OTEL_SERVICE_VERSION=1.0.0
+            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=common_services
+            - OTEL_TRACES_EXPORTER=otlp
+            - OTEL_LOGS_EXPORTER=otlp
+            - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy-common-services:4318
+            - OTEL_NODE_RESOURCE_DETECTORS=all
+            - API_URL=http://db-app:5055
+        ports:
+            - 5001:5001
+        networks:
+            - host-net
+        healthcheck:
+            test: curl -f http://localhost:5001/health || exit 1
+            timeout: 15s
+            retries: 3
+
+    fastapi-app:
+        build:
+            context: ../fastapi-app
+            dockerfile: Dockerfile
+        image: fastapi-app:1.0.0
+        container_name: fastapi-app
+        labels:
+            logger: vector
+            service_namespace: 'common_services'
+            service_name: 'fastapi-app'
+        environment:
+            - OTEL_SERVICE_NAME=fastapi-app
+            - OTEL_RESOURCE_ATTRIBUTES=service.namespace=common_services
+            - OTEL_SERVICE_VERSION=1.0.0
+            - OTEL_TRACES_EXPORTER=otlp
+            - OTEL_METRICS_EXPORTER=otlp
+            - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy-common-services:4318
+            - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+            - OTEL_PYTHON_LOG_CORRELATION=true
+            - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+            - OTEL_PYTHON_EXCLUDED_URLS=\/health
+            - API_URL=http://db-app:5055
+        ports:
+            - 8000:8000
+        networks:
+            - host-net
+        healthcheck:
+            test: curl -f http://localhost:8000/health || exit 1
+            timeout: 15s
+            retries: 3
+
+    alloy-nautilus:
+        image: grafana/alloy:v1.1.0
+        volumes:
+            - ./config.alloy:/etc/alloy/config.alloy
+        command:
+            - run
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --storage.path=/var/lib/alloy/data
+            - /etc/alloy/config.alloy
+        networks:
+            - host-net
+        environment:
+            - OTEL_SERVICE_NAMESPACE=nautilus
+
+    alloy-common-services:
+        image: grafana/alloy:v1.1.0
+        ports:
+            - 12346:12346
+        volumes:
+            - ./config.alloy:/etc/alloy/config.alloy
+        command:
+            - run
+            - --server.http.listen-addr=0.0.0.0:12346
+            - --storage.path=/var/lib/alloy/data
+            - --stability.level=experimental
+            - /etc/alloy/config.alloy
+        networks:
+            - host-net
+        environment:
+            - OTEL_SERVICE_NAMESPACE=common_services
+
+    grafana:
+        image: grafana/grafana:latest
+        labels:
+            logging: 'promtail_sys'
+            tenant_id: 'admin'
+        container_name: grafana
+        restart: unless-stopped
+        environment:
+            GF_SECURITY_ADMIN_USER: admin
+            GF_SECURITY_ADMIN_PASSWORD: password
+            GF_FEATURE_TOGGLES_ENABLE: 'timeSeriesTable'
+        volumes:
+            - ./grafana-data:/var/lib/grafana
+            - ./setup:/etc/grafana/provisioning
+            - ./dashboards:/var/lib/grafana/dashboards
+        ports:
+            - 3000:3000
+        networks:
+            - host-net
+
+    loki:
+        image: grafana/loki:main
+        labels:
+            logging: 'promtail_sys'
+            tenant_id: 'admin'
+        container_name: loki
+        hostname: loki
+        volumes:
+            - ./loki-config.yml:/etc/loki/local-config.yml
+        command: ['-config.file=/etc/loki/local-config.yml', '-config.expand-env=true']
+        networks:
+            - host-net
+
+    tempo:
+        image: grafana/tempo:main-24cbe3e
+        labels:
+            logging: 'promtail_sys'
+            tenant_id: 'admin'
+        container_name: tempo
+        hostname: tempo
+        #      command: [ "-config.file=/etc/tempo.yml", "-multitenancy.enabled=true"]
+        command: ['-config.file=/etc/tempo.yml']
+        volumes:
+            - ./tempo.yml:/etc/tempo.yml
+            - ./tempo-data:/tmp/tempo
+        networks:
+            - host-net
+
+    opensearch:
+        image: opensearchproject/opensearch:2.8.0
+        container_name: opensearch
+        environment:
+            - cluster.name=opensearch-cluster
+            - node.name=opensearch
+            - discovery.seed_hosts=opensearch
+            - cluster.initial_master_nodes=opensearch
+            - plugins.query.datasources.encryption.masterkey=b534b1ce4f4f04b524a2b500
+            - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+            - 'OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m' # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+            nofile:
+                soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+                hard: 65536
+        volumes:
+            - ./opensearch-data:/usr/share/opensearch/data
+        ports:
+            - 9200:9200
+            - 9600:9600 # required for Performance Analyzer
+        labels:
+            logging: 'promtail_sys'
+            tenant_id: 'admin'
+        networks:
+            - host-net
+        healthcheck:
+            test: curl -f -u admin:admin --insecure https://localhost:9200/_cluster/health || exit 1
+            timeout: 15s
+            retries: 3
+        command:
+            - /bin/bash
+            - -c
+            - |
+                ./bin/opensearch-plugin install https://github.com/Aiven-Open/prometheus-exporter-plugin-for-opensearch/releases/download/2.8.0.0/prometheus-exporter-2.8.0.0.zip &&
+                /usr/share/opensearch/opensearch-docker-entrypoint.sh opensearch
+
+    setup-db:
+        image: alpine/curl
+        command: >-
+            sh -c 
+            'curl -X PUT -k -u admin:admin https://opensearch:9200/user &&
+            curl -X PUT -k -u admin:admin https://opensearch:9200/user/_doc/1 -H "Content-Type: application/json"
+            -d "{\"name\": \"test\", \"email\": \"test@test.com\", \"password\": \"password\"}"'
+        networks:
+            - host-net
+        depends_on:
+            opensearch:
+                condition: service_healthy
+
+    opensearch-dashboards:
+        image: opensearchproject/opensearch-dashboards:2.8.0
+        container_name: opensearch-dashboards
+        ports:
+            - 5601:5601
+        expose:
+            - '5601'
+        environment:
+            OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
+        networks:
+            - host-net
+
+    node-exporter:
+        image: bitnami/node-exporter:1.8.2-debian-12-r12
+        networks:
+            - host-net
+        ports:
+            - 9100:9100
+
+    vector:
+        image: timberio/vector:nightly-2024-02-14-alpine
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./vector.yml:/etc/vector/vector.yml
+        networks:
+            - host-net
+
+    mimir:
+        image: grafana/mimir:2.12.0
+        volumes:
+            - ./mimir.yml:/etc/mimir/config.yml
+        command: ['--config.file', '/etc/mimir/config.yml']
+        networks:
+            - host-net
+        healthcheck:
+            test: wget --no-verbose --tries=1 --spider http://localhost:9009/ready || exit 1
+            timeout: 15s
+            retries: 3
+
+    alloy-metrics-scraper:
+        image: grafana/alloy:v1.1.0
+        volumes:
+            - ./metrics-scraper-config.alloy:/etc/alloy/config.alloy
+        command:
+            - run
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --storage.path=/var/lib/alloy/data
+            - /etc/alloy/config.alloy
+        networks:
+            - host-net
+        environment:
+            - OTEL_SERVICE_NAMESPACE=nautilus
+        ports:
+            - 12345:12345
+
+    fast-api-load-test:
+        image: grafana/k6
+        environment:
+            - API_URL=fastapi-app:8000
+            - K6_PROMETHEUS_RW_SERVER_URL=http://mimir:9009/api/v1/push
+            - K6_PROMETHEUS_RW_HEADERS_X-SCOPE-ORGID=common_services
+        depends_on:
+            mimir:
+                condition: service_healthy
+            fastapi-app:
+                condition: service_healthy
+        volumes:
+            - ../fastapi-app/tests/k6.js:/test/k6.js
+        networks:
+            - host-net
+        command: ['run', '--out', 'experimental-prometheus-rw', '/test/k6.js']
+
+    cadvisor:
+        image: gcr.io/cadvisor/cadvisor:v0.49.1
+        command:
+            - -logtostderr
+            - -docker_only
+            - -enable_metrics
+            - cpu,memory,network,process
+        volumes:
+            - /dev/disk/:/dev/disk:ro
+            - /var/lib/docker/:/var/lib/docker:ro
+            - /sys:/sys:ro
+            - /var/run:/var/run:ro
+            - /:/rootfs:ro
+        ports:
+            - 8080:8080
+        privileged: true
+        devices:
+            - /dev/kmsg
+        networks:
+            - host-net
+
+networks:
+    host-net:
+        external: true
