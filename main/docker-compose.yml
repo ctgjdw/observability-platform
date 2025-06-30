@@ -25,6 +25,9 @@ services:
             test: curl -f http://localhost:5055/health || exit 1
             timeout: 15s
             retries: 3
+        depends_on:
+            opensearch:
+                condition: service_healthy
 
     express-app:
         build:
@@ -175,7 +178,7 @@ services:
             - bootstrap.memory_lock=true
             - 'OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m'
             - OPENSEARCH_INITIAL_ADMIN_PASSWORD=P@ssw0rd1234444!
-            - "DISABLE_INSTALL_DEMO_CONFIG=false"
+            - 'DISABLE_INSTALL_DEMO_CONFIG=false'
         ulimits:
             memlock:
                 soft: -1
