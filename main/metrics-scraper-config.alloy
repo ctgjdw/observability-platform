@@ -22,6 +22,14 @@ prometheus.scrape "docker" {
   forward_to = [prometheus.remote_write.mimir.receiver]
 }
 
+prometheus.scrape "elasticsearch_exporter" {
+  targets = [
+    {"__address__" = "elasticsearch-exporter:9114"},
+  ]
+
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
 prometheus.scrape "opensearch" {
   targets = [
     {"__address__" = "opensearch:9200"},
@@ -29,7 +37,7 @@ prometheus.scrape "opensearch" {
 
   basic_auth {
     username = "admin"
-    password = "admin"
+    password = "P@ssw0rd1234444!"
   }
 
   tls_config {
@@ -37,8 +45,8 @@ prometheus.scrape "opensearch" {
   }
 
   forward_to = [prometheus.remote_write.mimir.receiver]
-  metrics_path = "/_prometheus/metrics"
-  scheme = "https"
+  metrics_path = "/metrics"
+  scheme = "http"
 }
 
 prometheus.remote_write "mimir" {

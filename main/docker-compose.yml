@@ -25,9 +25,6 @@ services:
             test: curl -f http://localhost:5055/health || exit 1
             timeout: 15s
             retries: 3
-        depends_on:
-            opensearch:
-                condition: service_healthy
 
     express-app:
         build:
@@ -169,51 +166,47 @@ services:
             - host-net
 
     opensearch:
-        image: opensearchproject/opensearch:2.8.0
+        image: opensearchproject/opensearch:2.19.2
         container_name: opensearch
         environment:
             - cluster.name=opensearch-cluster
             - node.name=opensearch
-            - discovery.seed_hosts=opensearch
-            - cluster.initial_master_nodes=opensearch
-            - plugins.query.datasources.encryption.masterkey=b534b1ce4f4f04b524a2b500
-            - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
-            - 'OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m' # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+            - discovery.type=single-node
+            - bootstrap.memory_lock=true
+            - 'OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m'
+            - OPENSEARCH_INITIAL_ADMIN_PASSWORD=P@ssw0rd1234444!
+            - "DISABLE_INSTALL_DEMO_CONFIG=false"
         ulimits:
             memlock:
                 soft: -1
                 hard: -1
             nofile:
-                soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+                soft: 65536
                 hard: 65536
         volumes:
             - ./opensearch-data:/usr/share/opensearch/data
         ports:
             - 9200:9200
-            - 9600:9600 # required for Performance Analyzer
-        labels:
-            logging: 'promtail_sys'
-            tenant_id: 'admin'
+            - 9600:9600
         networks:
             - host-net
         healthcheck:
-            test: curl -f -u admin:admin --insecure https://localhost:9200/_cluster/health || exit 1
+            test: curl -f -u admin:P@ssw0rd1234444! --insecure https://localhost:9200/_cluster/health || exit 1
             timeout: 15s
             retries: 3
-        command:
-            - /bin/bash
-            - -c
-            - |
-                ./bin/opensearch-plugin install https://github.com/Aiven-Open/prometheus-exporter-plugin-for-opensearch/releases/download/2.8.0.0/prometheus-exporter-2.8.0.0.zip &&
-                /usr/share/opensearch/opensearch-docker-entrypoint.sh opensearch
 
     setup-db:
         image: alpine/curl
         command: >-
-            sh -c 
-            'curl -X PUT -k -u admin:admin https://opensearch:9200/user &&
-            curl -X PUT -k -u admin:admin https://opensearch:9200/user/_doc/1 -H "Content-Type: application/json"
-            -d "{\"name\": \"test\", \"email\": \"test@test.com\", \"password\": \"password\"}"'
+            sh -c '
+            until curl -s -f -k -u admin:P@ssw0rd1234444! https://opensearch:9200/_cluster/health; do
+              echo "Waiting for OpenSearch to be healthy...";
+              sleep 5;
+            done;
+            curl -X PUT -k -u admin:P@ssw0rd1234444! https://opensearch:9200/user;
+            curl -X PUT -k -u admin:P@ssw0rd1234444! https://opensearch:9200/user/_doc/1 -H "Content-Type: application/json"
+            -d "{\"name\": \"test\", \"email\": \"test@test.com\", \"password\": \"password\"}";
+            '
         networks:
             - host-net
         depends_on:
@@ -221,7 +214,7 @@ services:
                 condition: service_healthy
 
     opensearch-dashboards:
-        image: opensearchproject/opensearch-dashboards:2.8.0
+        image: opensearchproject/opensearch-dashboards:2.19.2
         container_name: opensearch-dashboards
         ports:
             - 5601:5601
@@ -231,6 +224,26 @@ services:
             OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
         networks:
             - host-net
+
+    elasticsearch-exporter:
+        image: prometheuscommunity/elasticsearch-exporter:v1.9.0
+        container_name: elasticsearch-exporter
+        command:
+            - '--es.uri=https://admin:P@ssw0rd1234444!@opensearch:9200'
+            - '--es.ssl-skip-verify'
+            - '--es.all'
+            - '--es.indices'
+            - '--collector.clustersettings'
+            - '--collector.snapshots'
+            - '--es.shards'
+            - '--es.timeout=10s'
+        ports:
+            - 9114:9114
+        networks:
+            - host-net
+        depends_on:
+            opensearch:
+                condition: service_healthy
 
     node-exporter:
         image: bitnami/node-exporter:1.8.2-debian-12-r12
