@@ -3,3 +3,6 @@ tempo-data
 opensearch-data
 __pycache__
 .DS_store
+airflow/logs
+airflow/plugins
+.env
