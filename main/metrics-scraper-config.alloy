@@ -22,6 +22,14 @@ prometheus.scrape "docker" {
   forward_to = [prometheus.remote_write.mimir.receiver]
 }
 
+prometheus.scrape "airflow" {
+  targets = [
+    {"__address__" = "statsd-exporter:9102"},
+  ]
+
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
 prometheus.scrape "elasticsearch_exporter" {
   targets = [
     {"__address__" = "elasticsearch-exporter:9114"},

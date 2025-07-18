@@ -10,12 +10,12 @@ with DAG(
     start_date=pendulum.datetime(2025, 7, 17, tz="UTC"),
     catchup=False,
     schedule="*/1 * * * *",
-    tags=["docker", "test"],
+    tags=["docker_operator_test", "docker_test"],
 ) as dag:
     DockerOperator(
         task_id="docker_test",
         image="ubuntu:latest",
-        command='bash -c "for i in {1..10}; do echo $i; sleep 1; done"',
+        command='bash -c "if [ $(shuf -i 1-10 -n 1) -le 7 ]; then exit 1; else for i in {1..10}; do echo $i; sleep 1; done; fi"',
         auto_remove="never",
         network_mode="bridge",
         labels={
